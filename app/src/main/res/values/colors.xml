@@ -1,0 +1,11 @@
+<resources>
+    <color name="background">#F3F5FA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text">#172139</color>
+    <color name="muted">#536078</color>
+    <color name="accent">#3555D6</color>
+    <color name="on_accent">#FFFFFF</color>
+    <color name="border">#DCE2EE</color>
+    <color name="soft">#E9EDFB</color>
+    <color name="success">#14744B</color>
+</resources>

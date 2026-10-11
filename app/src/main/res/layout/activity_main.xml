@@ -1,0 +1,345 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            style="@style/Eyebrow"
+            android:layout_marginTop="12dp"
+            android:text="@string/tagline" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-bold"
+            android:text="@string/app_name"
+            android:textColor="@color/text"
+            android:textStyle="bold"
+            android:textSize="36sp" />
+
+        <TextView
+            style="@style/Body"
+            android:layout_marginBottom="24dp"
+            android:text="@string/subtitle" />
+
+        <LinearLayout
+            android:id="@+id/onboarding"
+            style="@style/Section"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/Body"
+                android:fontFamily="sans-serif-bold"
+                android:text="@string/welcome_title"
+                android:textColor="@color/text"
+                android:textSize="28sp" />
+
+            <TextView
+                style="@style/Body"
+                android:layout_marginTop="16dp"
+                android:text="@string/welcome_body" />
+
+            <TextView
+                style="@style/Body"
+                android:layout_marginTop="16dp"
+                android:text="@string/welcome_note" />
+
+            <Button
+                android:id="@+id/getStarted"
+                style="@style/Primary"
+                android:text="@string/get_started" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/workspace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- 1. CONNECTION: full card when not connected, small card when connected -->
+            <LinearLayout
+                android:id="@+id/connectionCard"
+                style="@style/Section">
+
+                <LinearLayout
+                    android:id="@+id/connectionFull"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        style="@style/Eyebrow"
+                        android:text="@string/connection_label" />
+
+                    <TextView
+                        android:id="@+id/status"
+                        style="@style/Body"
+                        android:accessibilityLiveRegion="polite"
+                        android:fontFamily="sans-serif-bold"
+                        android:text="@string/state_DISCONNECTED"
+                        android:textColor="@color/text"
+                        android:textSize="23sp" />
+
+                    <TextView
+                        android:id="@+id/statusDetail"
+                        style="@style/Body"
+                        android:layout_marginTop="8dp"
+                        android:text="@string/disconnected_detail" />
+
+                    <TextView
+                        android:id="@+id/hostName"
+                        style="@style/Body"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/no_host"
+                        android:textColor="@color/text" />
+
+                    <Button
+                        android:id="@+id/chooseHost"
+                        style="@style/Action"
+                        android:text="@string/choose_host" />
+
+                    <Button
+                        android:id="@+id/connect"
+                        style="@style/Primary"
+                        android:text="@string/connect" />
+
+                    <Button
+                        android:id="@+id/prepare"
+                        style="@style/Action"
+                        android:text="@string/retry" />
+
+                    <Button
+                        android:id="@+id/pair"
+                        style="@style/Action"
+                        android:text="@string/pair" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/connectionCompact"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            style="@style/Body"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="@string/state_CONNECTED"
+                            android:textColor="@color/success"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:id="@+id/compactHost"
+                            style="@style/Body"
+                            android:ellipsize="end"
+                            android:singleLine="true"
+                            android:textColor="@color/text" />
+                    </LinearLayout>
+
+                    <Button
+                        android:id="@+id/disconnectCompact"
+                        style="@style/Action"
+                        android:layout_width="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:text="@string/disconnect" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 2. TIMER: moved up, one compact row -->
+            <LinearLayout style="@style/Section">
+
+                <TextView
+                    style="@style/Eyebrow"
+                    android:text="@string/timer_label" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/timer"
+                        style="@style/Body"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:fontFamily="monospace"
+                        android:text="@string/timer_zero"
+                        android:textColor="@color/text"
+                        android:textSize="38sp" />
+
+                    <Button
+                        android:id="@+id/timerToggle"
+                        style="@style/Primary"
+                        android:layout_width="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:minWidth="96dp"
+                        android:text="@string/timer_start" />
+
+                    <Button
+                        android:id="@+id/timerReset"
+                        style="@style/Action"
+                        android:layout_width="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="0dp"
+                        android:text="@string/reset" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 3. PRESENTATION: Previous | Next side by side, other keys in pairs -->
+            <LinearLayout style="@style/Section">
+
+                <TextView
+                    style="@style/Eyebrow"
+                    android:text="@string/remote_label" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/previous"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeMinTextSize="13sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
+                        android:minHeight="132dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="@string/previous" />
+
+                    <Button
+                        android:id="@+id/next"
+                        style="@style/Primary"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_weight="1"
+                        android:autoSizeMaxTextSize="22sp"
+                        android:autoSizeMinTextSize="13sp"
+                        android:autoSizeStepGranularity="1sp"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
+                        android:minHeight="132dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="@string/next" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/start"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="@string/start" />
+
+                    <Button
+                        android:id="@+id/current"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_weight="1"
+                        android:text="@string/current" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/black"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="@string/black" />
+
+                    <Button
+                        android:id="@+id/end"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_weight="1"
+                        android:text="@string/end" />
+                </LinearLayout>
+
+                <Switch
+                    android:id="@+id/volume"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:minHeight="56dp"
+                    android:text="@string/volume"
+                    android:textColor="@color/text" />
+
+                <TextView
+                    style="@style/Body"
+                    android:text="@string/volume_note" />
+
+                <TextView
+                    style="@style/Body"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/focus_note" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/help"
+                style="@style/Action"
+                android:text="@string/help" />
+
+            <Button
+                android:id="@+id/diagnostics"
+                style="@style/Action"
+                android:text="@string/diagnostics" />
+
+            <Button
+                android:id="@+id/bluetoothSettings"
+                style="@style/Action"
+                android:text="@string/settings" />
+
+            <Button
+                android:id="@+id/appSettings"
+                style="@style/Action"
+                android:text="@string/app_settings" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

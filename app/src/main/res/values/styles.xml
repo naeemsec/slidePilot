@@ -1,0 +1,28 @@
+<resources>
+    <style name="Section">
+        <item name="android:layout_width">match_parent</item><item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">vertical</item><item name="android:padding">20dp</item>
+        <item name="android:layout_marginBottom">16dp</item><item name="android:background">@drawable/card</item>
+    </style>
+    <style name="Body">
+        <item name="android:layout_width">match_parent</item><item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">14sp</item><item name="android:textColor">@color/muted</item>
+        <item name="android:lineSpacingExtra">4dp</item>
+    </style>
+    <style name="Eyebrow" parent="Body">
+        <item name="android:textSize">11sp</item><item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.13</item><item name="android:layout_marginBottom">12dp</item>
+    </style>
+    <style name="Action" parent="android:style/Widget.Material.Button">
+        <item name="android:layout_width">match_parent</item><item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">52dp</item><item name="android:minWidth">0dp</item>
+        <item name="android:padding">12dp</item><item name="android:layout_marginTop">8dp</item>
+        <item name="android:background">@drawable/button_soft</item><item name="android:backgroundTint">@null</item>
+        <item name="android:textColor">@color/text</item><item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item><item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+    <style name="Primary" parent="Action">
+        <item name="android:background">@drawable/button_primary</item><item name="android:textColor">@color/on_accent</item>
+    </style>
+</resources>
