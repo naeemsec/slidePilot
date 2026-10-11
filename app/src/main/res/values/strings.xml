@@ -7,8 +7,8 @@
     <string name="welcome_note">Requires compatible Bluetooth HID firmware. Keep SlidePilot open and the phone unlocked while presenting. Pairing alone does not mean connected.</string>
     <string name="get_started">Set up my remote</string>
     <string name="connection_label">01 / CONNECTION</string>
-    <string name="remote_label">02 / PRESENTATION</string>
-    <string name="timer_label">03 / YOUR TIME</string>
+    <string name="timer_label">02 / PRESENTATION TIME</string>
+    <string name="remote_label">03 / PRESENTATION</string>
     <string name="choose_host">Choose paired laptop</string>
     <string name="no_host">No laptop selected</string>
     <string name="connect">Connect</string>

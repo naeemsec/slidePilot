@@ -123,7 +123,10 @@ public final class MainActivity extends Activity {
         bindCommand(R.id.black, KeyboardReport.Command.BLACK);
         findViewById(R.id.end).setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle(R.string.end_title).setMessage(R.string.end_body)
-                .setPositiveButton(R.string.end_confirm, (dialog, which) -> send(KeyboardReport.Command.END, v))
+                .setPositiveButton(R.string.end_confirm, (dialog, which) -> {
+                    send(KeyboardReport.Command.END, v);
+                    accumulated = elapsed(); timerRunning = false; renderTimer();
+                })
                 .setNegativeButton(R.string.cancel, null).show());
         findViewById(R.id.timerToggle).setOnClickListener(v -> {
             if (timerRunning) { accumulated = elapsed(); timerRunning = false; }
@@ -135,12 +138,10 @@ public final class MainActivity extends Activity {
                 .setPositiveButton(R.string.reset, (dialog, which) -> {
                     accumulated = 0; timerRunning = false; renderTimer();
                 }).setNegativeButton(R.string.cancel, null).show());
-        findViewById(R.id.help).setOnClickListener(v -> new AlertDialog.Builder(this)
-                .setTitle(R.string.help_title).setMessage(R.string.help_body).setPositiveButton(R.string.close, null).show());
+        findViewById(R.id.help).setOnClickListener(v ->
+                startActivity(new Intent(this, HelpActivity.class)));
         findViewById(R.id.diagnostics).setOnClickListener(v -> showDiagnostics());
         findViewById(R.id.bluetoothSettings).setOnClickListener(v -> openIntent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
-        findViewById(R.id.appSettings).setOnClickListener(v -> openIntent(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.parse("package:" + getPackageName()))));
         showOnboarding(!prefs.getBoolean("onboarded", false));
     }
     @SuppressWarnings("deprecation")
@@ -381,8 +382,15 @@ public final class MainActivity extends Activity {
         findViewById(id).setOnClickListener(view -> send(command, view));
     }
     private void send(KeyboardReport.Command command, View view) {
-        if (resumed && controller != null && controller.send(command))
+        if (resumed && controller != null && controller.send(command)) {
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+
+            if ((command == KeyboardReport.Command.START || command == KeyboardReport.Command.CURRENT) && !timerRunning) {
+                timerAnchor = SystemClock.elapsedRealtime();
+                timerRunning = true;
+                renderTimer();
+            }
+        }
     }
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
         int code = event.getKeyCode();

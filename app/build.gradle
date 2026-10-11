@@ -1,7 +1,12 @@
-plugins { id 'com.android.application' }
+
+plugins {
+    id 'com.android.application'
+}
+
 android {
     namespace 'com.slidepilot.app'
     compileSdk 36
+
     defaultConfig {
         applicationId 'com.slidepilot.app'
         minSdk 28
@@ -9,13 +14,30 @@ android {
         versionCode 2
         versionName '1.0.1'
     }
+
     buildTypes {
-        release { minifyEnabled false }
+        release {
+            minifyEnabled false
+        }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    lint { abortOnError true }
+
+    lint {
+        abortOnError true
+    }
 }
-// Framework Java/XML UI only. No third-party runtime dependencies.
+
+dependencies {
+    // AndroidX activity and UI compatibility
+    implementation 'androidx.appcompat:appcompat:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.2'
+    implementation 'androidx.recyclerview:recyclerview:1.4.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.activity:activity:1.13.0'
+}
