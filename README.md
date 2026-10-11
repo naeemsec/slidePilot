@@ -2,25 +2,13 @@
 
 Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML, API 28–36, no laptop companion, accounts, analytics, or internet permission. The source is complete; real phone/Windows qualification is required before relying on it in class. See `VALIDATION.md` for what was actually verified.
 
-## Open and build on Windows
-
-1. Extract the project ZIP to a normal folder, for example `C:\AndroidProjects\SlidePilot`. Open that folder in Android Studio (**Open**, not New Project). The folder contains `settings.gradle`.
-2. Use an Android Studio release that supports Android Gradle Plugin **8.13.2** (Otter 2025.2.1 or a compatible newer release). Retain the project's pinned versions when prompted about upgrades.
-3. In **Settings → Build, Execution, Deployment → Build Tools → Gradle**, select **JDK 17** as Gradle JDK. Install a JDK 17 if necessary. For terminal builds, point `JAVA_HOME` to that JDK and put its `bin` directory on PATH. Java source and target compatibility are 17.
-4. In **Tools → SDK Manager**, install **Android SDK Platform 36**, **Android SDK Build-Tools 35.0.0** (enable Show Package Details), **Android SDK Platform-Tools**, and **Android SDK Command-line Tools (latest)**. No NDK, Kotlin, or emulator image is required for physical-device testing. Android Studio writes your machine-specific `local.properties`; do not copy another machine's SDK path.
-5. Let Gradle sync. The included official wrapper downloads **Gradle 8.13**, protected by a SHA-256 distribution checksum. AGP and SDK/build-tool downloads need internet during setup; the installed app does not.
-6. Enable Developer options → USB debugging on your phone, connect by USB, approve the computer's debugging prompt, select the phone in Android Studio, and click Run. Install a Windows USB driver for your phone if needed.
-
-PowerShell, from the project root:
-
-```powershell
-.\gradlew.bat --version
-.\gradlew.bat clean assembleDebug lintDebug
-```
-
-The debug APK is `app\build\outputs\apk\debug\app-debug.apk`. You can copy it to your phone and install it after allowing APK installation for your file manager. Debug builds are for testing; do not rely on debug signing keys for long-term updates.
-
-For a shareable release: **Build → Generate Signed App Bundle or APK → APK → Create new keystore**, choose a strong password, save the keystore securely outside the project, select `release`, and finish. Keep the keystore: subsequent updates must use the same application ID and signing key. Release builds deliberately use no shrinking, avoiding unnecessary HID debugging variables. No signing passwords or private keys are shipped in source.
+## Features
+- Next / Previous slide
+- Start from beginning / Start from current slide
+- Black screen toggle and End show
+- Volume keys as Next / Previous
+- Built-in presentation timer
+- Local-only diagnostics, no internet permission, no data collection
 
 Build configuration:
 
@@ -39,15 +27,14 @@ Minimum SDK controls which Android versions can install the app. It does **not**
 
 ## Pair with Windows, then connect HID
 
-1. Turn Bluetooth on on both devices. Connect the laptop to the projector and open desktop PowerPoint.
-2. Open SlidePilot, finish onboarding, allow **Nearby Devices**, and wait for **HID Ready** or **Not Paired**. A registration failure must be resolved before using the remote.
+1. Turn Bluetooth on on both devices.
+2. Open SlidePilot, finish onboarding, allow **Nearby Devices**, and wait for **HID Ready** or **Not Paired**.
 3. Tap **Pair a new laptop → Make discoverable**. Advertising permission is requested only for this action. Keep SlidePilot visible while pairing from Windows.
 4. Windows 11: **Settings → Bluetooth & devices → Add device → Bluetooth**. Windows 10: **Settings → Devices → Bluetooth & other devices → Add Bluetooth or other device → Bluetooth**.
-5. Select the phone; Windows may display the phone's Bluetooth name, rather than “SlidePilot.” Confirm matching codes on both devices. SlidePilot does not intercept or bypass Android's pairing dialog.
-6. If Windows asks you to *type* a code on the phone as a keyboard, cancel that attempt. Initiate pairing from **Android Bluetooth settings** with Windows discoverable, then return to SlidePilot. This app has no arbitrary-text/passkey keyboard. If necessary remove stale pairing on both devices and repeat while HID is registered.
-7. Return to SlidePilot, tap **Choose paired laptop**, select your Windows machine, then **Connect**. The chooser shows all paired devices because device-class labels are not a reliable way to identify Windows. Select the laptop, not a headset.
-8. Wait for **Connected**. “Paired” in Windows or Android settings is not proof of a usable HID session. Registration alone is not a connection either.
-9. Focus PowerPoint on the laptop. Try Start, Next, Previous, Black Screen, and End before presenting.
+5. Select the phone; Windows display the phone's Bluetooth name. Confirm matching codes on both devices. SlidePilot does not intercept or bypass Android's pairing dialog.
+6. Return to SlidePilot, tap **Choose paired laptop**, select your Windows machine, then **Connect**. The chooser shows all paired devices because device-class labels are not a reliable way to identify Windows. Select the laptop, not a headset.
+7. Wait for **Connected**. “Paired” in SlidePilot app.
+8. Focus PowerPoint on the laptop. Try Start, Next, Previous, Black Screen, and End before presenting.
 
 If the phone is already paired, skip discoverability and select the laptop directly. An incoming connection from the selected paired laptop can also be accepted. With no selected laptop, the first bonded incoming host can be accepted; no commands are sent until the user presses a control. Once a host is selected, incoming connections from other hosts are rejected.
 
@@ -64,12 +51,6 @@ For classmates: one presenter at a time. Disconnect the previous phone before co
 | End, with confirmation | Escape, usage `0x29` |
 | Black screen toggle | B, usage `0x05` |
 | Volume up / down | Next / Previous, when enabled and the app has focus |
-
-Reports use an eight-byte boot-compatible keyboard layout, no report ID (`0` in Android API calls), and a one-byte LED output report. Both boot and report protocol modes use that layout. There is no BLE GATT implementation or RFCOMM fallback.
-
-The app sends a press then an all-zero release after 45 ms. Inputs are serialized, long-held volume keys do not repeat, and taps inside a 220 ms debounce window are ignored. Failed release submissions are retried twice before closing the session. Release is also attempted on focus loss, pause, disconnection, and cleanup. No Bluetooth implementation can guarantee delivery after radio loss, process termination, or host failure; an accepted `sendReport` call is not an acknowledgment that PowerPoint acted. The app never displays a fake slide number or a fabricated black-screen state.
-
-Keep the phone **unlocked and SlidePilot visible**. The screen stays awake while connected. Leaving the Activity closes registration and the connection; on return, select/connect again (the selected host is remembered). No foreground service, passive/background control, lock-screen control, notification permission, or battery-exemption request is used. Window focus loss releases held keys. Android may unregister HID even before the Activity stops; callbacks invalidate the session immediately. A configuration change safely closes and rebuilds the session; reconnect afterward.
 
 The timer is a separate offline stopwatch based on monotonic elapsed time. It continues through temporary backgrounding, preserves state across Activity recreation, and is independent of slide commands. Fresh launches without restored Activity state start at zero. It is not synchronized with PowerPoint.
 
@@ -109,41 +90,6 @@ PowerPoint must have keyboard focus. Shortcut behavior can vary with keyboard la
 | Another classmate cannot connect | Disconnect the prior phone first. Use one active phone remote per laptop. |
 
 There is **no verified model-specific compatibility list** in this delivery. TECNO Smart 20, Realme C50, and Infinix Hot 50 are test targets, not claimed supported hardware. Even identical marketing names can have different chipsets/firmware. No app using only official APIs can enable an OEM-disabled HID Device implementation. A compatible phone or a physical presentation clicker is necessary in that case; this project does not silently switch to a companion application.
-
-Local diagnostic commands (USB debugging, Windows PowerShell):
-
-```powershell
-adb devices
-adb logcat -s SlidePilot:I '*:S'
-adb shell dumpsys bluetooth_manager
-adb shell dumpsys package com.slidepilot.app
-```
-
-Reproduce once from a fresh launch and note the sequence: profile service obtained → registration accepted → registration callback true → HID connected callback → command transmission. The app logs registration acceptance/callbacks and HID state/errors, not command content. The `registerApp` return value is not registration state. Version 1.0.1 retains the proxy even after a false return and waits up to 10 seconds for the app-status callback. A false callback or no callback is a failure. Review system dumps before sharing; unlike app logs, they may contain unrelated device identifiers.
-
-## Test before classroom use
-
-For **each physical phone/OS/firmware**, and for Windows 10 and 11 where available:
-
-- [ ] Fresh install shows onboarding; controls remain disabled before a real connection.
-- [ ] Deny Nearby Devices, deny permanently, grant in settings, revoke while connected: no crash, no enabled remote with stale state.
-- [ ] Bluetooth off at startup; turn on; switch off while registering/connecting/connected; restore and reconnect.
-- [ ] HID proxy unavailable/rejected/timeout gives actionable state; registration rejection and unsolicited unregistration disable commands.
-- [ ] Register succeeds only after callback; close another HID app and verify retry.
-- [ ] Pair through Windows; pair through Android; cancel pairing; test old pairing removal and re-pairing.
-- [ ] Select correct laptop among multiple paired devices; reject a different host; unpair selected laptop and reconnect.
-- [ ] No host answer times out; cancel while connecting; late callbacks do not falsely enable controls.
-- [ ] Each of the six shortcuts works in desktop PowerPoint. Verify Shift releases: after Shift+F5 and Escape, one B in Notepad should be lowercase with Caps Lock off.
-- [ ] Single taps, rapid double taps, and holding volume keys cause no runaway repetition. Test 100 sequential Next/Previous operations at ordinary presentation pace.
-- [ ] Disconnect explicitly, reconnect, walk out of range, recover; disable Bluetooth on Windows and recover.
-- [ ] Home, another app, pairing/settings activity, lock/unlock, incoming call, rotation, theme change, and process recreation do not leave an armed stale remote. Reconnect when returning.
-- [ ] Timer start/pause/reset, background time, rotation restoration, and device clock changes behave correctly.
-- [ ] Dark/light themes, 320dp and larger widths, 200% font, TalkBack, gesture navigation, three-button navigation, and display cutout remain usable.
-- [ ] Disable Wi-Fi/mobile data while keeping Bluetooth on: full operation continues offline.
-- [ ] Classmate handoff: disconnect one phone, connect another, verify commands affect only the intended laptop.
-- [ ] Rehearse for 30–60 minutes with the actual laptop/projector arrangement before live use.
-
-Record exact phone model, Android version, firmware/build number, Windows build, Bluetooth adapter/driver, registration result, connect result, and test outcome. Do not mark a device “supported” just because the APK installs.
 
 ## Official references
 
