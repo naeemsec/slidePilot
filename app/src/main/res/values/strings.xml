@@ -96,4 +96,8 @@
     <string name="connect_wait">Please wait %1$d s…</string>
     <string name="diagnostics_clear">Clear</string>
     <string name="diagnostics_cleared">Diagnostics cleared</string>
+    <string name="disconnect_title">Disconnect?</string>
+    <string name="disconnect_body">The presentation will stop responding to your phone until you connect again.</string>
+    <string name="notification_channel">Connection status</string>
+    <string name="notification_channel_alert">Connection alerts</string>
 </resources>

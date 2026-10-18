@@ -262,7 +262,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="0dp"
+                    android:layout_marginBottom="18dp"
                     android:gravity="top"
                     android:orientation="horizontal">
 
@@ -297,6 +297,48 @@
                             android:layout_marginTop="4dp"
                             android:lineSpacingExtra="3dp"
                             android:text="@string/help_step_4_detail"
+                            android:textColor="@color/muted"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="18dp"
+                    android:gravity="top"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="@drawable/help_step_circle"
+                        android:gravity="center"
+                        android:text="05"
+                        android:textColor="#154E96"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/help_step_5_title"
+                            android:textColor="@color/text"
+                            android:textSize="15sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:lineSpacingExtra="3dp"
+                            android:text="@string/help_step_5_detail"
                             android:textColor="@color/muted"
                             android:textSize="13sp" />
                     </LinearLayout>
@@ -528,35 +570,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="15dp"
-                    android:text="@string/help_section_original"
-                    android:textColor="@color/text"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
-                    android:lineSpacingExtra="3dp"
-                    android:text="@string/help_original_description"
-                    android:textColor="@color/muted"
-                    android:textSize="13sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:lineSpacingExtra="5dp"
-                    android:text="@string/help_body"
-                    android:textColor="@color/text"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <LinearLayout style="@style/Section">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="15dp"
                     android:text="@string/help_section_troubleshooting"
                     android:textColor="@color/text"
                     android:textSize="20sp"
@@ -617,6 +630,25 @@
                     android:text="@string/help_about"
                     android:textColor="@color/muted"
                     android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/checkForUpdates"
+                    style="@style/Action"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:minHeight="52dp"
+                    android:text="Check for updates"
+                    android:textAllCaps="false" />
+<!--                <Button-->
+<!--                    android:id="@+id/test"-->
+<!--                    style="@style/Action"-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_marginTop="16dp"-->
+<!--                    android:minHeight="52dp"-->
+<!--                    android:text="Test Update Dialog"-->
+<!--                    android:textAllCaps="false" />-->
             </LinearLayout>
 
             <TextView

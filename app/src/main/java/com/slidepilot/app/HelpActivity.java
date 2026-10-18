@@ -11,8 +11,9 @@ import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.widget.TextView;
 
-/** In-app guide. Uses the app's existing framework theme and help_body resource. */
 public final class HelpActivity extends Activity {
+
+    private AppUpdateChecker updateChecker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +24,13 @@ public final class HelpActivity extends Activity {
         findViewById(R.id.helpBack).setOnClickListener(v -> finish());
         findViewById(R.id.helpDone).setOnClickListener(v -> finish());
         showVersion();
+        updateChecker = new AppUpdateChecker(this);
+
+        findViewById(R.id.checkForUpdates).setOnClickListener(
+                view -> updateChecker.check(true));
+//        findViewById(R.id.test).setOnClickListener(
+//                view -> updateChecker.previewUpdateDialog()
+//        );
     }
 
     @SuppressWarnings("deprecation")
@@ -79,5 +87,23 @@ public final class HelpActivity extends Activity {
             // Version is informational only; this does not affect presentation controls.
         }
         ((TextView) findViewById(R.id.helpVersion)).setText(getString(R.string.help_version_format, version));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (updateChecker != null) updateChecker.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (updateChecker != null) updateChecker.onPause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (updateChecker != null) updateChecker.close();
+        super.onDestroy();
     }
 }

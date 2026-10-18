@@ -24,6 +24,7 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.transition.AutoTransition;
+import android.transition.Slide;
 import android.transition.TransitionManager;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
@@ -35,16 +36,28 @@ import android.widget.Button;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
-    private static final int CONNECT_PERMISSION = 10, ADVERTISE_PERMISSION = 11, DISCOVERABLE = 12;
+    private static final int CONNECT_PERMISSION = 10, ADVERTISE_PERMISSION = 11, DISCOVERABLE = 12, NOTIFICATION_PERMISSION = 13;;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Set<Integer> consumedVolume = new HashSet<>();
+    private AppUpdateChecker updateChecker;
     private HidController controller;
     private SharedPreferences prefs;
     private boolean started, resumed, receiverRegistered, timerRunning, needsRestart;
@@ -56,6 +69,7 @@ public final class MainActivity extends Activity {
     private TextView compactHost;
     private boolean compactShown;
     private int lastWait;
+    private boolean keepConnectionOnStop;
     private final int[] remoteIds = {R.id.next, R.id.previous, R.id.start, R.id.current, R.id.black, R.id.end};
     private final Runnable ticker = new Runnable() {
         @Override public void run() { renderTimer(); renderCooldown(); if (started) ui.postDelayed(this, 250); }
@@ -77,6 +91,7 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         prefs = getSharedPreferences("slidepilot", MODE_PRIVATE);
+        SlideService.attach(this);
         status = findViewById(R.id.status);
         detail = findViewById(R.id.statusDetail);
         hostName = findViewById(R.id.hostName);
@@ -88,7 +103,9 @@ public final class MainActivity extends Activity {
         connectionFull = findViewById(R.id.connectionFull);
         connectionCompact = findViewById(R.id.connectionCompact);
         compactHost = findViewById(R.id.compactHost);
-        findViewById(R.id.disconnectCompact).setOnClickListener(v -> { if (controller != null) controller.disconnect(); });
+        findViewById(R.id.disconnectCompact).setOnClickListener(v -> {
+            confirmDisconnect(() -> { if (controller != null) controller.disconnect(); });
+        });
         configureInsets();
         if (savedInstanceState != null) {
             accumulated = savedInstanceState.getLong("elapsed");
@@ -109,7 +126,7 @@ public final class MainActivity extends Activity {
         connect.setOnClickListener(v -> {
             if (controller == null) return;
             if (controller.connected() || controller.state() == HidController.State.CONNECTING) controller.disconnect();
-            else controller.connect();
+            else { askNotificationPermission(); controller.connect(); };
         });
         findViewById(R.id.pair).setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle(R.string.pair_title).setMessage(R.string.pair_body)
@@ -138,11 +155,19 @@ public final class MainActivity extends Activity {
                 .setPositiveButton(R.string.reset, (dialog, which) -> {
                     accumulated = 0; timerRunning = false; renderTimer();
                 }).setNegativeButton(R.string.cancel, null).show());
-        findViewById(R.id.help).setOnClickListener(v ->
-                startActivity(new Intent(this, HelpActivity.class)));
+        findViewById(R.id.help).setOnClickListener(v -> {
+            keepConnectionOnStop = true;
+            startActivity(new Intent(this, HelpActivity.class));
+        });
         findViewById(R.id.diagnostics).setOnClickListener(v -> showDiagnostics());
-        findViewById(R.id.bluetoothSettings).setOnClickListener(v -> openIntent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)));
+        findViewById(R.id.bluetoothSettings).setOnClickListener(v -> {
+            Runnable open = () -> openIntent(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
+            if (controller != null && controller.connected()) confirmDisconnect(open);
+            else open.run();
+        });
         showOnboarding(!prefs.getBoolean("onboarded", false));
+        updateChecker = new AppUpdateChecker(this);
+        updateChecker.check(false);
     }
     @SuppressWarnings("deprecation")
     private void configureInsets() {
@@ -187,6 +212,7 @@ public final class MainActivity extends Activity {
     @Override protected void onStart() {
         super.onStart();
         started = true;
+        SlideService.setScreen(this::renderState, true);
         IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         // Bluetooth broadcasts can originate in the privileged Bluetooth package, not just system UID.
@@ -198,10 +224,16 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         resumed = true;
+        keepConnectionOnStop = false;
+        if (controller == null && SlideService.current != null && SlideService.current.isActive())
+            controller =SlideService.current;
+        if(controller != null) controller.republish();
         if (controller == null || needsRestart || !controller.hasPermission()) restartController();
+        if (updateChecker != null) updateChecker.onResume();
     }
     @Override protected void onPause() {
         resumed = false;
+        if (updateChecker != null) updateChecker.onPause();
         consumedVolume.clear();
         if (controller != null) controller.releaseKeys();
         super.onPause();
@@ -212,11 +244,19 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onStop() {
         started = false;
+        SlideService.setScreen(null, false);
         ui.removeCallbacks(ticker);
         if (receiverRegistered) { unregisterReceiver(bluetoothEvents); receiverRegistered = false; }
-        if (controller != null) { controller.close(); controller = null; }
+        if (controller != null && !keepConnectionOnStop && !keepAlive()) { controller.close(); controller = null; }
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onStop();
+    }
+    @Override
+    protected void onDestroy() {
+        if (updateChecker != null) updateChecker.close();
+        if (controller != null && !keepAlive()) controller.close();
+        controller = null;
+        super.onDestroy();
     }
     @Override protected void onSaveInstanceState(Bundle out) {
         out.putLong("elapsed", accumulated);
@@ -229,7 +269,8 @@ public final class MainActivity extends Activity {
         if (!resumed) { needsRestart = true; return; }
         needsRestart = false;
         if (controller != null) controller.close();
-        controller = new HidController(this, this::renderState);
+        controller = new HidController(this, SlideService.RELAY);
+        SlideService.current = controller;
         restoreHost();
         controller.start();
     }
@@ -427,6 +468,24 @@ public final class MainActivity extends Activity {
                     toast(R.string.diagnostics_cleared);
                 })
                 .setNegativeButton(R.string.close, null).show();
+    }
+    private boolean keepAlive() {
+        return controller != null && controller.isActive()
+                && (controller.connected() || controller.state() == HidController.State.CONNECTING);
+    }
+    private void askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                && !prefs.getBoolean("notifAsked", false)) {
+            prefs.edit().putBoolean("notifAsked", true).apply();
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+        }
+    }
+    private void confirmDisconnect(Runnable action) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.disconnect_title).setMessage(R.string.disconnect_body)
+                .setPositiveButton(R.string.disconnect, (dialog, which) -> action.run())
+                .setNegativeButton(R.string.cancel, null).show();
     }
     private void openIntent(Intent intent) {
         try { startActivity(intent); } catch (RuntimeException error) { toast(R.string.intent_failed); }
