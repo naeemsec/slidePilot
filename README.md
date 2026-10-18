@@ -1,12 +1,20 @@
-# SlidePilot
+<h1 align="center">SlidePilot</h1>
+
+<p align="center"><b>Control your PowerPoint slides from your phone over Bluetooth.<br>No laptop software needed.</b></p>
+
+<p align="center">
+  <a href="https://github.com/naeemsec/slidePilot/releases/latest">
+    <img src="https://img.shields.io/badge/Download-Latest%20APK-2ea44f?style=for-the-badge&logo=android&logoColor=white" alt="Download Latest APK" height="48">
+  </a>
+</p>
+
 Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML, API 28–36, no laptop companion, accounts or analytics. Always test your phone with your laptop before presenting in class.
+
+**Control your PowerPoint slides from your phone over Bluetooth. No laptop software needed.**
 
 [![Download Latest APK](https://img.shields.io/badge/Download-Latest%20APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/naeemsec/slidePilot/releases/latest)
 
-[Download the latest release](https://github.com/naeemsec/slidePilot/releases/latest)
-
-![Latest version](https://img.shields.io/github/v/release/naeemsec/slidePilot?label=version) ![Android 9+](https://img.shields.io/badge/Android-9%2B-3DDC84?logo=android&logoColor=white)
-**Control your PowerPoint slides from your phone over Bluetooth. No laptop software needed.**
+Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML, API 28–36, no laptop companion, accounts or analytics. Always test your phone with your laptop before presenting in class.
 
 
 ## Install
