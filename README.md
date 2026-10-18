@@ -10,13 +10,6 @@
 
 Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML, API 28–36, no laptop companion, accounts or analytics. Always test your phone with your laptop before presenting in class.
 
-**Control your PowerPoint slides from your phone over Bluetooth. No laptop software needed.**
-
-[![Download Latest APK](https://img.shields.io/badge/Download-Latest%20APK-2ea44f?style=for-the-badge&logo=android&logoColor=white)](https://github.com/naeemsec/slidePilot/releases/latest)
-
-Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML, API 28–36, no laptop companion, accounts or analytics. Always test your phone with your laptop before presenting in class.
-
-
 ## Install
 1. Tap **Download** above and open the latest release.
 2. Download the `.apk` file under **Assets** on your phone.
