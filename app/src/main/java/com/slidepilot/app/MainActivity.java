@@ -32,7 +32,10 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,6 +48,7 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -67,10 +71,11 @@ public final class MainActivity extends Activity {
     private Switch volume;
     private View connectionFull, connectionCompact;
     private TextView compactHost;
+    private EditText slideNumber;
     private boolean compactShown;
     private int lastWait;
     private boolean keepConnectionOnStop;
-    private final int[] remoteIds = {R.id.next, R.id.previous, R.id.start, R.id.current, R.id.black, R.id.end};
+    private final int[] remoteIds = {R.id.next, R.id.previous, R.id.start, R.id.current, R.id.black, R.id.end, R.id.slideNumber, R.id.goSlide};
     private final Runnable ticker = new Runnable() {
         @Override public void run() { renderTimer(); renderCooldown(); if (started) ui.postDelayed(this, 250); }
     };
@@ -138,6 +143,12 @@ public final class MainActivity extends Activity {
         bindCommand(R.id.start, KeyboardReport.Command.START);
         bindCommand(R.id.current, KeyboardReport.Command.CURRENT);
         bindCommand(R.id.black, KeyboardReport.Command.BLACK);
+        slideNumber = findViewById(R.id.slideNumber);
+        findViewById(R.id.goSlide).setOnClickListener(v -> goToSlide(v));
+        slideNumber.setOnEditorActionListener((view, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_GO) { goToSlide(findViewById(R.id.goSlide)); return true; }
+            return false;
+        });
         findViewById(R.id.end).setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle(R.string.end_title).setMessage(R.string.end_body)
                 .setPositiveButton(R.string.end_confirm, (dialog, which) -> {
@@ -418,6 +429,17 @@ public final class MainActivity extends Activity {
     private void renderCooldown() {
         if (controller == null) return;
         if (controller.cooldownSeconds() != lastWait) renderConnectButton();
+    }
+    private void goToSlide(View view) {
+        String text = slideNumber.getText().toString().trim();
+        if (text.isEmpty()) { toast(R.string.slide_number_empty); return; }
+        List<KeyboardReport.Command> keys = new ArrayList<>();
+        for (char c : text.toCharArray()) keys.add(KeyboardReport.digit(c - '0'));
+        keys.add(KeyboardReport.Command.ENTER);
+        InputMethodManager imm = getSystemService(InputMethodManager.class);
+        if (imm != null) imm.hideSoftInputFromWindow(slideNumber.getWindowToken(), 0);
+        if (resumed && controller != null && controller.sendSequence(keys))
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
     }
     private void bindCommand(int id, KeyboardReport.Command command) {
         findViewById(id).setOnClickListener(view -> send(command, view));

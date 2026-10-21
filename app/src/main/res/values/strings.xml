@@ -100,4 +100,8 @@
     <string name="disconnect_body">The presentation will stop responding to your phone until you connect again.</string>
     <string name="notification_channel">Connection status</string>
     <string name="notification_channel_alert">Connection alerts</string>
+    <string name="slide_number_hint">Slide no.</string>
+    <string name="slide_number_empty">Type a slide number first.</string>
+    <string name="go_slide">→</string>
+    <string name="go_slide_desc">Go to slide</string>
 </resources>

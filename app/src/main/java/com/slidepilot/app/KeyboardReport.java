@@ -4,8 +4,14 @@ package com.slidepilot.app;
 public final class KeyboardReport {
     private KeyboardReport() {}
     public enum Command {
+//        NEXT(0, 0x4e), PREVIOUS(0, 0x4b), START(0, 0x3e),
+//        CURRENT(0x02, 0x3e), END(0, 0x29), BLACK(0, 0x05);
+        // NEW
         NEXT(0, 0x4e), PREVIOUS(0, 0x4b), START(0, 0x3e),
-        CURRENT(0x02, 0x3e), END(0, 0x29), BLACK(0, 0x05);
+        CURRENT(0x02, 0x3e), END(0, 0x29), BLACK(0, 0x05),
+        ENTER(0, 0x28),
+        D1(0, 0x1e), D2(0, 0x1f), D3(0, 0x20), D4(0, 0x21), D5(0, 0x22),
+        D6(0, 0x23), D7(0, 0x24), D8(0, 0x25), D9(0, 0x26), D0(0, 0x27);
         final int modifier, usage;
         Command(int modifier, int usage) { this.modifier = modifier; this.usage = usage; }
     }
@@ -13,6 +19,9 @@ public final class KeyboardReport {
         return new byte[] {(byte) command.modifier, 0, (byte) command.usage, 0, 0, 0, 0, 0};
     }
     public static byte[] release() { return new byte[8]; }
+    private static final Command[] DIGITS = {Command.D0, Command.D1, Command.D2, Command.D3, Command.D4,
+            Command.D5, Command.D6, Command.D7, Command.D8, Command.D9};
+    public static Command digit(int value) { return DIGITS[value]; }
     public static byte[] descriptor() {
         return new byte[] {
             0x05, 0x01, 0x09, 0x06, (byte) 0xa1, 0x01,

@@ -8,4 +8,9 @@
     <color name="border">#DCE2EE</color>
     <color name="soft">#E9EDFB</color>
     <color name="success">#14744B</color>
+
+    <color name="input_fill">#F3F4F6</color>
+    <color name="input_stroke">#D1D5DB</color>
+    <color name="input_focus">#2EA44F</color>
+    <color name="input_hint">#6B7280</color>
 </resources>

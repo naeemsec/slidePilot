@@ -60,6 +60,9 @@ public final class HidController {
     private long lastPress = -1000;
     private State state = State.DISCONNECTED;
     private int releaseRetries;
+    private final java.util.ArrayDeque<KeyboardReport.Command> queue = new java.util.ArrayDeque<>();
+    private boolean sequenceRunning;
+    private final Runnable sequenceTask = this::sequenceStep;
     private final Runnable releaseTask = () -> releaseAttempt(releaseRetries);
     private final Runnable unblockTask = () -> blocked = false;
     private int lastMessage;
@@ -508,6 +511,9 @@ public final class HidController {
         handler.removeCallbacks(waitTask);
         handler.removeCallbacks(connectionTimeout);
         handler.removeCallbacks(releaseTask);
+        handler.removeCallbacks(sequenceTask);
+        queue.clear();
+        sequenceRunning = false;
 
         BluetoothDevice target = host != null
                 ? host
@@ -534,7 +540,7 @@ public final class HidController {
         emit(State.DISCONNECTED, R.string.disconnected_detail);
     }
     public boolean send(KeyboardReport.Command command) {
-        if (!connected() || !hasPermission() || busy || SystemClock.uptimeMillis() - lastPress < 220) return false;
+        if (!connected() || !hasPermission() || busy || sequenceRunning || SystemClock.uptimeMillis() - lastPress < 220) return false;
         try {
             if (host.getBondState() != BluetoothDevice.BOND_BONDED
                     || hid.getConnectionState(host) != BluetoothProfile.STATE_CONNECTED) {
@@ -550,6 +556,41 @@ public final class HidController {
             handler.postDelayed(releaseTask, 45);
             return true;
         } catch (RuntimeException error) { apiFailure(error); return false; }
+    }
+    /** Sends several keys one after another (digits then Enter). Returns false if it could not start. */
+    public boolean sendSequence(List<KeyboardReport.Command> commands) {
+        if (!connected() || !hasPermission() || busy || sequenceRunning || commands.isEmpty()) return false;
+        queue.clear();
+        queue.addAll(commands);
+        sequenceRunning = true;
+        sequenceStep();
+        return true;
+    }
+    private void sequenceStep() {
+        if (queue.isEmpty() || !connected()) { queue.clear(); sequenceRunning = false; return; }
+        if (busy) { handler.postDelayed(sequenceTask, 20); return; }
+        try {
+            if (host.getBondState() != BluetoothDevice.BOND_BONDED
+                    || hid.getConnectionState(host) != BluetoothProfile.STATE_CONNECTED) {
+                queue.clear(); sequenceRunning = false;
+                fail(State.DISCONNECTED, R.string.disconnected_detail);
+                return;
+            }
+            lastPress = SystemClock.uptimeMillis();
+            busy = true;
+            input = KeyboardReport.press(queue.poll());
+            if (!hid.sendReport(host, 0, input)) {
+                queue.clear(); sequenceRunning = false;
+                fail(State.CONNECTION_FAILED, R.string.report_failed);
+                return;
+            }
+            releaseRetries = 0;
+            handler.postDelayed(releaseTask, 45);
+            handler.postDelayed(sequenceTask, 110);
+        } catch (RuntimeException error) {
+            queue.clear(); sequenceRunning = false;
+            apiFailure(error);
+        }
     }
     public void releaseKeys() {
         handler.removeCallbacks(releaseTask);
@@ -594,6 +635,8 @@ public final class HidController {
         binding = false;
         busy = false;
         input = KeyboardReport.release();
+        queue.clear();
+        sequenceRunning = false;
         if (hid == null) { host = null; registered = registering = false; return; }
         closing = true;
         cleanupGeneration = radioGeneration;

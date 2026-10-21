@@ -310,6 +310,45 @@
                         android:text="@string/end" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:layout_gravity="center|center_horizontal"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/slideNumber"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:digits="0123456789"
+                        android:hint="@string/slide_number_hint"
+                        android:imeOptions="actionGo"
+                        android:importantForAutofill="no"
+                        android:inputType="number"
+                        android:maxLength="4"
+                        android:minHeight="56dp"
+                        android:textColor="@color/text"
+                        android:background="@drawable/bb_input"
+                        android:gravity="center_vertical"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:textColorHint="@color/input_hint"
+                        android:textSize="18sp"/>
+
+                    <ImageView
+                        android:id="@+id/goSlide"
+                        style="@style/Primary"
+                        android:layout_width="54dp"
+                        android:layout_height="54dp"
+                        android:contentDescription="@string/go_slide_desc"
+                        android:padding="15dp"
+                        android:layout_gravity="center_horizontal"
+                        android:src="@drawable/ic_send"/>
+                </LinearLayout>
+
                 <Switch
                     android:id="@+id/volume"
                     android:layout_width="match_parent"
