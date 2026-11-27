@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public final class HelpActivity extends Activity {
 
@@ -26,8 +27,13 @@ public final class HelpActivity extends Activity {
         showVersion();
         updateChecker = new AppUpdateChecker(this);
 
-        findViewById(R.id.checkForUpdates).setOnClickListener(
-                view -> updateChecker.check(true));
+        findViewById(R.id.checkForUpdates).setOnClickListener(view -> {
+//            if(!NetworkUtils.isOnline(this)) {
+//                Toast.makeText(this, "Sorry, You're offline.", Toast.LENGTH_SHORT).show();
+//                return;
+//            }
+            updateChecker.check(true);
+        });
 //        findViewById(R.id.test).setOnClickListener(
 //                view -> updateChecker.previewUpdateDialog()
 //        );
