@@ -46,12 +46,12 @@ import java.util.concurrent.Executors;
 public final class AppUpdateChecker {
 
     private static final String REPOSITORY_URL =
-            "https://github.com/naeemsec/slidePilot";
+            "https://github.com/naeemsec/presaKey";
 
     private static final int MAX_API_BYTES = 1024 * 1024;
     private static final long MAX_APK_BYTES = 200L * 1024L * 1024L;
 
-    private static final String CHANNEL_ID = "slidepilot_updates";
+    private static final String CHANNEL_ID = "presaKey_updates";
     private static final int NOTIFICATION_ID = 1001;
 
     private final Activity activity;
@@ -164,8 +164,7 @@ public final class AppUpdateChecker {
         if (compareVersions(latest, installed) <= 0) {
             String version = installed.replaceFirst("^[vV]", "");
             return Result.message(manual,
-                    "✓ You're using the latest version\n"
-                            + "SlidePilot v" + version);
+                    "✓ You're using the latest version\n" + "PresaKey v" + version);
         }
 
         String apkUrl = null;
@@ -209,7 +208,7 @@ public final class AppUpdateChecker {
         result.title = release.optString("name", "").trim();
 
         if (result.title.isEmpty()) {
-            result.title = "SlidePilot " + latest;
+            result.title = "PresaKey " + latest;
         }
 
         result.notes = release.optString("body", "").trim();
@@ -264,7 +263,7 @@ public final class AppUpdateChecker {
             connection.setRequestProperty(
                     "Accept", "application/vnd.github+json");
             connection.setRequestProperty(
-                    "User-Agent", "SlidePilot-Android");
+                    "User-Agent", "PresaKey-Android");
 
             int status = connection.getResponseCode();
             Diagnostics.add("UPDATE HTTP=" + status);
@@ -470,7 +469,7 @@ public final class AppUpdateChecker {
         try {
             File directory = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             if (directory != null) {
-                File temporary = new File(directory, "slidepilot-update.apk.part");
+                File temporary = new File(directory, "presakey-update.apk.part");
                 if (temporary.exists()) temporary.delete();
             }
         } catch (Exception ignored) {}
@@ -499,8 +498,8 @@ public final class AppUpdateChecker {
                     throw new IOException("Cannot create download directory");
                 }
 
-                temporary = new File(directory, "slidepilot-update.apk.part");
-                File destination = new File(directory, "slidepilot-update.apk");
+                temporary = new File(directory, "presakey-update.apk.part");
+                File destination = new File(directory, "presakey-update.apk");
 
                 downloadFile(result, temporary);
 
@@ -535,7 +534,7 @@ public final class AppUpdateChecker {
                 if (apkInfo == null
                         || !activity.getPackageName().equals(apkInfo.packageName)) {
                     destination.delete();
-                    throw new IOException("APK does not belong to SlidePilot");
+                    throw new IOException("APK does not belong to PresaKey");
                 }
 
                 if (compareVersions(apkInfo.versionName, result.latest) != 0) {
@@ -619,7 +618,7 @@ public final class AppUpdateChecker {
                 connection.setReadTimeout(20000);
                 connection.setInstanceFollowRedirects(false);
                 connection.setUseCaches(false);
-                connection.setRequestProperty("User-Agent", "SlidePilot-Android");
+                connection.setRequestProperty("User-Agent", "PresaKey-Android");
 
                 if (existingSize > 0) {
                     connection.setRequestProperty("Range", "bytes=" + existingSize + "-");
@@ -727,7 +726,7 @@ public final class AppUpdateChecker {
                     "App Updates",
                     NotificationManager.IMPORTANCE_LOW
             );
-            channel.setDescription("Notifications for SlidePilot app updates");
+            channel.setDescription("Notifications for PresaKey app updates");
             NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm != null) {
                 nm.createNotificationChannel(channel);
@@ -754,7 +753,7 @@ public final class AppUpdateChecker {
                     PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
 
-            String title = paused ? "SlidePilot Download Paused" : "Downloading SlidePilot " + downloadingVersion;
+            String title = paused ? "PresaKey Download Paused" : "Downloading PresaKey " + downloadingVersion;
             String text = paused ? (progress >= 0 ? progress + "% • Tap to resume or open" : "Download paused")
                     : (progress >= 0 ? progress + "% downloaded" : "Downloading...");
 
@@ -799,7 +798,7 @@ public final class AppUpdateChecker {
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, CHANNEL_ID)
                     .setSmallIcon(R.mipmap.ic_launcher)
-                    .setContentTitle("SlidePilot " + downloadingVersion + " Downloaded")
+                    .setContentTitle("PresaKey " + downloadingVersion + " Downloaded")
                     .setContentText("Tap to install update now")
                     .setProgress(0, 0, false)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -923,7 +922,7 @@ public final class AppUpdateChecker {
 
         new AlertDialog.Builder(activity)
                 .setTitle("Download complete")
-                .setMessage("SlidePilot " + downloadingVersion
+                .setMessage("PresaKey " + downloadingVersion
                         + " has been downloaded. Continue to Android's "
                         + "installer to install the update?")
                 .setPositiveButton("Install", (d, which) ->
@@ -946,7 +945,7 @@ public final class AppUpdateChecker {
 
                 new AlertDialog.Builder(activity)
                         .setTitle("Allow installation")
-                        .setMessage("Allow SlidePilot to install this "
+                        .setMessage("Allow PresaKey to install this "
                                 + "downloaded update in Android settings. "
                                 + "You can return here afterwards.")
                         .setNegativeButton("Cancel", (d, w) -> { })
@@ -987,7 +986,7 @@ public final class AppUpdateChecker {
         result.manual = true;
         result.installed = "1.0.0";
         result.latest = "1.1.0";
-        result.title = "SlidePilot v1.1.0";
+        result.title = "PresaKey v1.1.0";
         result.notes = "[\"Improved Bluetooth connection stability\", \"Faster slide controls & responsiveness\", \"Fixed minor UI issues\"]";
 
         result.apkUrl = "";

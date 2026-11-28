@@ -1,9 +1,9 @@
-<h1 align="center">SlidePilot</h1>
+<h1 align="center">PresaKey</h1>
 
 <p align="center"><b>Control your PowerPoint slides from your phone over Bluetooth.<br>No laptop software needed.</b></p>
 
 <p align="center">
-  <a href="https://github.com/naeemsec/slidePilot/releases/latest">
+  <a href="https://github.com/naeemsec/presaKey/releases/latest">
     <img src="https://img.shields.io/badge/Download-Latest%20APK-2ea44f?style=for-the-badge&logo=android&logoColor=white" alt="Download Latest APK" height="48">
   </a>
 </p>
@@ -14,7 +14,7 @@ Offline Bluetooth presentation remote for Windows PowerPoint. Java + native XML,
 1. Tap **Download** above and open the latest release.
 2. Download the `.apk` file under **Assets** on your phone.
 3. Open it and allow **Install unknown apps** if Android asks.
-4. Open SlidePilot and follow the pairing steps below.
+4. Open PresaKey and follow the pairing steps below.
 
 ## Features
 - Next / Previous slide
@@ -45,11 +45,11 @@ Minimum SDK controls which Android versions can install the app. It does **not**
 ## Pair with Windows, then connect HID
 
 1. Turn Bluetooth on on both devices.
-2. Open SlidePilot, finish onboarding, allow **Nearby Devices**, and wait for **HID Ready** or **Not Paired**.
-3. Tap **Pair a new laptop → Make discoverable** (the phone stays visible for 2 minutes). Keep SlidePilot open. Do not pair from Android's Bluetooth settings first: on some phones (e.g. TECNO Spark 40) the laptop then remembers the phone without the keyboard service and cannot connect.
+2. Open PresaKey, finish onboarding, allow **Nearby Devices**, and wait for **HID Ready** or **Not Paired**.
+3. Tap **Pair a new laptop → Make discoverable** (the phone stays visible for 2 minutes). Keep PresaKey open. Do not pair from Android's Bluetooth settings first: on some phones (e.g. TECNO Spark 40) the laptop then remembers the phone without the keyboard service and cannot connect.
 4. Windows 11: **Settings → Bluetooth & devices → Add device → Bluetooth**. Windows 10: **Settings → Devices → Bluetooth & other devices → Add Bluetooth or other device → Bluetooth**.
-5. Select the phone; Windows display the phone's Bluetooth name. Confirm matching codes on both devices. SlidePilot does not intercept or bypass Android's pairing dialog.
-6. Return to SlidePilot, tap **Choose paired laptop**, select your Windows machine, then **Connect**. The chooser shows all paired devices because device-class labels are not a reliable way to identify Windows. Select the laptop, not a headset.
+5. Select the phone; Windows display the phone's Bluetooth name. Confirm matching codes on both devices. PresaKey does not intercept or bypass Android's pairing dialog.
+6. Return to PresaKey, tap **Choose paired laptop**, select your Windows machine, then **Connect**. The chooser shows all paired devices because device-class labels are not a reliable way to identify Windows. Select the laptop, not a headset.
 7. Wait for **Connected**. Being paired in Android or Windows is not enough.
 8. Focus PowerPoint on the laptop. Try Start, Next, Previous, Black Screen, and End before presenting.
 
@@ -70,7 +70,7 @@ For classmates: one presenter at a time. Disconnect the previous phone before co
 | Volume up / down | Next / Previous, when enabled and the app has focus |
 
 ## Background behavior
-The connection stays alive when you press Home or the screen locks, and the notification shows its state. Volume keys work only while SlidePilot is on screen. Tap the notification to return to the app.
+The connection stays alive when you press Home or the screen locks, and the notification shows its state. Volume keys work only while PresaKey is on screen. Tap the notification to return to the app.
 
 The timer is a separate offline stopwatch based on monotonic elapsed time. It continues through temporary backgrounding, preserves state across Activity recreation, and is independent of slide commands. Fresh launches without restored Activity state start at zero. It is not synchronized with PowerPoint.
 
@@ -105,13 +105,13 @@ PowerPoint must have keyboard focus. Shortcut behavior can vary with keyboard la
 | Bluetooth Off | Use Turn on Bluetooth and accept Android's prompt. No silent adapter toggle is attempted. |
 | Permission required | Allow Nearby Devices. If permanently denied, use App settings → Permissions. Retry after returning. |
 | Unsupported / unavailable | No adapter, proxy request rejected, or HID service timeout. Restart Bluetooth, reboot once, check official firmware updates. A timeout is suggestive, not proof of permanent lack of support. |
-| Registration rejected | Close other Bluetooth keyboard/gamepad/remote apps. Android permits only one registered HID app. Keep SlidePilot open, then retry. |
+| Registration rejected | Close other Bluetooth keyboard/gamepad/remote apps. Android permits only one registered HID app. Keep PresaKey open, then retry. |
 | Registration timeout/lost | Check that the screen is visible, unlocked, and not covered by another app. OEM lifecycle restrictions can interfere. Retry; copy diagnostics if repeatable. |
-| Paired but cannot connect | Check Windows Bluetooth is on, disconnect other phone remotes, verify the selected host, retry. If stale HID discovery is suspected, remove the phone/laptop on **both** ends and pair again with SlidePilot registered. |
+| Paired but cannot connect | Check Windows Bluetooth is on, disconnect other phone remotes, verify the selected host, retry. If stale HID discovery is suspected, remove the phone/laptop on **both** ends and pair again with PresaKey registered. |
 | Connect request rejected or timeout | Check Windows Bluetooth adapter drivers via the laptop manufacturer's official support, restart both radios, and retry. The attempt ends after 20 seconds; wait for the short countdown and press Connect again. |
 | Connected but no slide changes | Click into PowerPoint; verify keyboard shortcuts using the physical laptop keyboard. Try B in an empty Notepad file: one tap should enter one `b` and stop. Do not test against unsaved important content. |
-| Key seems held | Disconnect SlidePilot or turn off Bluetooth on the phone; use the laptop keyboard to clear the relevant modifier/key, then reconnect. Gather diagnostics. Radio-level delivery cannot be guaranteed. |
-| Volume keys change audio | Enable the toggle, focus SlidePilot, verify Connected. The firmware may reserve volume events; use on-screen buttons. Locked-phone operation is not implemented. |
+| Key seems held | Disconnect PresaKey or turn off Bluetooth on the phone; use the laptop keyboard to clear the relevant modifier/key, then reconnect. Gather diagnostics. Radio-level delivery cannot be guaranteed. |
+| Volume keys change audio | Enable the toggle, focus PresaKey, verify Connected. The firmware may reserve volume events; use on-screen buttons. Locked-phone operation is not implemented. |
 | Another classmate cannot connect | Disconnect the prior phone first. Use one active phone remote per laptop. |
 
 There is **no verified model-specific compatibility list** in this delivery. Tested on TECNO Spark 20 and TECNO Spark 40 (Android 15) with Windows. Even identical marketing names can have different chipsets/firmware. No app using only official APIs can enable an OEM-disabled HID Device implementation. A compatible phone or a physical presentation clicker is necessary in that case; this project does not silently switch to a companion application.

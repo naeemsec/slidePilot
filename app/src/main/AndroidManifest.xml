@@ -28,7 +28,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SlidePilot">
+        android:theme="@style/Theme.PresaKey">
 
         <provider
             android:name="androidx.core.content.FileProvider"

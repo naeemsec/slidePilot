@@ -13,11 +13,11 @@ public final class Diagnostics {
         String line = SystemClock.elapsedRealtime() + "ms  " + event;
         if (LINES.size() >= 120) LINES.removeFirst();
         LINES.addLast(line);
-        Log.i("SlidePilot", event);
+        Log.i("PresaKey", event);
     }
     public static synchronized void clear() { LINES.clear(); }
     public static synchronized String snapshot() {
-        StringBuilder out = new StringBuilder("SlidePilot 1.0.1\n");
+        StringBuilder out = new StringBuilder("PresaKey 1.0.1\n");
         out.append(Build.MANUFACTURER).append(' ').append(Build.MODEL)
             .append(" / Android ").append(Build.VERSION.RELEASE)
             .append(" / API ").append(Build.VERSION.SDK_INT).append('\n');
