@@ -219,7 +219,7 @@ public final class HidController {
                 try {
                     registering = true;
                     BluetoothHidDeviceAppSdpSettings sdp = new BluetoothHidDeviceAppSdpSettings(
-                            "SlidePilot", "Offline presentation keyboard & touchpad", "SlidePilot",
+                            "PresaKey", "Offline presentation keyboard & touchpad", "PresaKey",
                             BluetoothHidDevice.SUBCLASS1_COMBO, KeyboardReport.descriptor());
                     // The return value is not registration state. Some firmware returns false
                     // while a native registration and its callback are still pending.

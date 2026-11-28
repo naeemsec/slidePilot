@@ -46,18 +46,17 @@ import java.util.concurrent.Executors;
 public final class AppUpdateChecker {
 
     private static final String REPOSITORY_URL =
-            "https://github.com/naeemsec/presaKey";
+            "https://github.com/naeemsec/PresaKey";
 
     private static final int MAX_API_BYTES = 1024 * 1024;
     private static final long MAX_APK_BYTES = 200L * 1024L * 1024L;
 
-    private static final String CHANNEL_ID = "presaKey_updates";
+    private static final String CHANNEL_ID = "presakey_updates";
     private static final int NOTIFICATION_ID = 1001;
 
     private final Activity activity;
     private final Handler main = new Handler(Looper.getMainLooper());
-    private final ExecutorService executor =
-            Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     private volatile boolean closed;
     private volatile boolean isPaused;

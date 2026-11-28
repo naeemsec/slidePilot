@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.preskey.app;
 
 import java.util.Arrays;
 

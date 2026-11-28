@@ -18,8 +18,8 @@ import android.os.Looper;
 /** Keeps the HID session alive while connecting/connected and shows the status notification. */
 @SuppressLint("MissingPermission")
 public final class SlideService extends Service {
-    static final String ACTION_DISCONNECT = "com.slidepilot.app.DISCONNECT";
-    private static final String CHANNEL = "slidepilot_session", CHANNEL_ALERT = "slidepilot_alert";
+    static final String ACTION_DISCONNECT = "com.presakey.app.DISCONNECT";
+    private static final String CHANNEL = "presakey_session", CHANNEL_ALERT = "presakey_alert";
     private static final int ONGOING_ID = 41, ALERT_ID = 42;
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 

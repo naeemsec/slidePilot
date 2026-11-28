@@ -86,7 +86,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        prefs = getSharedPreferences("slidepilot", MODE_PRIVATE);
+        prefs = getSharedPreferences("presakey", MODE_PRIVATE);
         SlideService.attach(this);
         status = findViewById(R.id.status);
         detail = findViewById(R.id.statusDetail);
@@ -474,7 +474,7 @@ public final class MainActivity extends Activity {
                 .setMessage(getString(R.string.diagnostics_note) + "\n\n" + report)
                 .setPositiveButton(R.string.copy, (dialog, which) -> {
                     ClipboardManager clipboard = getSystemService(ClipboardManager.class);
-                    if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("SlidePilot diagnostics", report));
+                    if (clipboard != null) clipboard.setPrimaryClip(ClipData.newPlainText("PresaKey diagnostics", report));
                     toast(R.string.copied);
                 })
                 .setNeutralButton(R.string.diagnostics_clear, (dialog, which) -> {

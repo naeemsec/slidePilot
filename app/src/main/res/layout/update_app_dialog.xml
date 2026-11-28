@@ -89,7 +89,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:gravity="center"
-                        android:text="SlidePilot Update"
+                        android:text="PresaKey Update"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -234,7 +234,7 @@
                         android:layout_marginStart="10dp"
                         android:layout_weight="1"
                         android:lineSpacingExtra="2dp"
-                        android:text="Keep SlidePilot updated for the latest improvements."
+                        android:text="Keep PresaKey updated for the latest improvements."
                         android:textColor="?android:attr/textColorSecondary"
                         android:textSize="12sp" />
 
