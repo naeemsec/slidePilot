@@ -1,10 +1,10 @@
 <resources>
-    <string name="app_name">SlidePilot</string>
+    <string name="app_name">PresaKey</string>
     <string name="tagline">YOUR STAGE. YOUR PACE.</string>
     <string name="subtitle">Offline presentation remote</string>
     <string name="welcome_title">Own the next slide.</string>
     <string name="welcome_body">Turn your phone into a Bluetooth keyboard for PowerPoint on Windows. No internet. No laptop app. Just your presentation.</string>
-    <string name="welcome_note">Requires compatible Bluetooth HID firmware. Keep SlidePilot open and the phone unlocked while presenting. Pairing alone does not mean connected.</string>
+    <string name="welcome_note">Requires compatible Bluetooth HID firmware. Keep PresaKey open and the phone unlocked while presenting. Pairing alone does not mean connected.</string>
     <string name="get_started">Set up my remote</string>
     <string name="connection_label">01 / CONNECTION</string>
     <string name="timer_label">02 / PRESENTATION TIME</string>
@@ -52,7 +52,7 @@
     <string name="profile_timeout">Android did not provide the HID Device service in time. Retry after restarting Bluetooth. If this persists, the firmware may not support this profile.</string>
     <string name="profile_unavailable">The firmware did not expose the Bluetooth HID Device profile. Retry after restarting Bluetooth; this phone may not support keyboard mode.</string>
     <string name="registration_timeout">Android did not confirm HID registration within 10 seconds. Keep this screen open, close other Bluetooth remote apps, and retry.</string>
-    <string name="registration_lost">Android unregistered the HID keyboard. Keep SlidePilot in the foreground and tap Check / retry HID.</string>
+    <string name="registration_lost">Android unregistered the HID keyboard. Keep PresaKey in the foreground and tap Check / retry HID.</string>
     <string name="service_lost">The Bluetooth HID service disconnected. Check Bluetooth, then retry HID registration.</string>
     <string name="not_paired_detail">No paired devices found. Pair your Windows laptop first, then select it here.</string>
     <string name="ready_detail">HID keyboard registration confirmed. Select your paired Windows laptop and tap Connect.</string>
@@ -68,14 +68,14 @@
     <string name="not_ready">Wait for HID registration before pairing. Tap Check / retry HID if needed.</string>
     <string name="no_paired_devices">No paired devices yet. Use Pair a new laptop or Bluetooth settings, then return here.</string>
     <string name="pair_title">Pair with Windows</string>
-    <string name="pair_body">1. Keep SlidePilot open and tap Make discoverable.\n\n2. On Windows 11: Settings → Bluetooth &amp; devices → Add device → Bluetooth. On Windows 10: Settings → Devices → Bluetooth &amp; other devices → Add Bluetooth or other device.\n\n3. Select this phone (Windows may show its Bluetooth name), then confirm matching pairing codes on both devices.\n\n4. Return to SlidePilot, choose the laptop, and tap Connect. Wait for Connected before using controls.\n\nIf Android asks you to type a pairing code using a keyboard, cancel and pair from Android Bluetooth settings instead, then return here and retry HID.</string>
+    <string name="pair_body">1. Keep PresaKey open and tap Make discoverable.\n\n2. On Windows 11: Settings → Bluetooth &amp; devices → Add device → Bluetooth. On Windows 10: Settings → Devices → Bluetooth &amp; other devices → Add Bluetooth or other device.\n\n3. Select this phone (Windows may show its Bluetooth name), then confirm matching pairing codes on both devices.\n\n4. Return to PresaKey, choose the laptop, and tap Connect. Wait for Connected before using controls.\n\nIf Android asks you to type a pairing code using a keyboard, cancel and pair from Android Bluetooth settings instead, then return here and retry HID.</string>
     <string name="discoverable">Make discoverable</string>
-    <string name="discoverable_on">Phone discoverable temporarily. Add this phone from Windows now; keep SlidePilot open.</string>
+    <string name="discoverable_on">Phone discoverable temporarily. Add this phone from Windows now; keep PresaKey open.</string>
     <string name="discoverable_cancelled">Discoverability was cancelled. You can retry or pair through Bluetooth settings.</string>
     <string name="discoverable_permission">Allow Nearby Devices advertising to make this phone discoverable. Existing paired connections do not require advertising.</string>
     <string name="intent_failed">This phone could not open that system screen. Open Bluetooth settings manually.</string>
     <string name="help_title">Ready for the classroom</string>
-    <string name="help_body">• Connect your laptop to the projector and open PowerPoint.\n\n• Pair once, then connect the HID keyboard in SlidePilot. A Bluetooth pairing label is not an HID connection.\n\n• Next/Previous send Page Down/Page Up. Start sends F5; From current sends Shift+F5. End sends Escape. B toggles black screen during a slideshow.\n\n• The laptop must keep PowerPoint focused. SlidePilot cannot read the current slide or black-screen state. Keyboard layout and PowerPoint settings can affect shortcuts.\n\n• Leaving SlidePilot or locking your phone ends the session. Reopen, retry HID if needed, and connect again. The local timer continues until paused.\n\n• Use one presenter at a time. Disconnect the previous phone before another classmate connects.\n\n• TECNO, Realme and Infinix compatibility depends on the exact model and firmware. API 28+ alone is not a support guarantee.</string>
+    <string name="help_body">• Connect your laptop to the projector and open PowerPoint.\n\n• Pair once, then connect the HID keyboard in PresaKey. A Bluetooth pairing label is not an HID connection.\n\n• Next/Previous send Page Down/Page Up. Start sends F5; From current sends Shift+F5. End sends Escape. B toggles black screen during a slideshow.\n\n• The laptop must keep PowerPoint focused. PresaKey cannot read the current slide or black-screen state. Keyboard layout and PowerPoint settings can affect shortcuts.\n\n• Leaving PresaKey or locking your phone ends the session. Reopen, retry HID if needed, and connect again. The local timer continues until paused.\n\n• Use one presenter at a time. Disconnect the previous phone before another classmate connects.\n\n• TECNO, Realme and Infinix compatibility depends on the exact model and firmware. API 28+ alone is not a support guarantee.</string>
     <string name="state_PERMISSION_REQUIRED">Permission required</string>
     <string name="state_BLUETOOTH_OFF">Bluetooth Off</string>
     <string name="state_UNSUPPORTED">Unsupported / unavailable</string>
@@ -92,7 +92,7 @@
     <string name="diagnostics_note">No laptop names or addresses are logged. Copy includes phone model, Android version, and recent HID events. Nothing is uploaded.</string>
     <string name="continue_permission">Continue</string>
     <string name="cleanup_wait">Waiting for the previous HID session to finish cleanup…</string>
-    <string name="cleanup_uncertain">Android did not confirm HID cleanup. Turn Bluetooth off and on while SlidePilot is open, then retry. If this persists, force-stop and reopen SlidePilot. A new registration has been blocked to avoid overlapping sessions.</string>
+    <string name="cleanup_uncertain">Android did not confirm HID cleanup. Turn Bluetooth off and on while PresaKey is open, then retry. If this persists, force-stop and reopen PresaKey. A new registration has been blocked to avoid overlapping sessions.</string>
     <string name="connect_wait">Please wait %1$d s…</string>
     <string name="diagnostics_clear">Clear</string>
     <string name="diagnostics_cleared">Diagnostics cleared</string>
@@ -100,7 +100,7 @@
     <string name="disconnect_body">The presentation will stop responding to your phone until you connect again.</string>
     <string name="notification_channel">Connection status</string>
     <string name="notification_channel_alert">Connection alerts</string>
-    <string name="slide_number_hint">Enter slide num to go</string>
+    <string name="slide_number_hint">Slide no</string>
     <string name="slide_number_empty">Type a slide number first.</string>
     <string name="go_slide">→</string>
     <string name="go_slide_desc">Go to slide</string>

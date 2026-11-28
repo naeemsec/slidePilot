@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -10,7 +10,6 @@ import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public final class HelpActivity extends Activity {
 

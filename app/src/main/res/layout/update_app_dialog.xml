@@ -293,7 +293,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="6dp"
-                        android:text="Remind me Leter"
+                        android:text="Remind me Later"
                         android:textAllCaps="false" />
 
                     <Button

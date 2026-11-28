@@ -1,8 +1,11 @@
-
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -14,13 +17,15 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.FileProvider;
 
-import com.slidepilot.app.databinding.UpdateAppDialogBinding;
+import com.presakey.app.databinding.UpdateAppDialogBinding;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,17 +51,23 @@ public final class AppUpdateChecker {
     private static final int MAX_API_BYTES = 1024 * 1024;
     private static final long MAX_APK_BYTES = 200L * 1024L * 1024L;
 
+    private static final String CHANNEL_ID = "slidepilot_updates";
+    private static final int NOTIFICATION_ID = 1001;
+
     private final Activity activity;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService executor =
             Executors.newSingleThreadExecutor();
 
     private volatile boolean closed;
+    private volatile boolean isPaused;
     private boolean resumed;
     private boolean checking;
     private boolean downloading;
     private boolean installPromptShowing;
 
+    private int lastProgress = 0;
+    private Result currentResult;
     private Result pending;
     private AlertDialog dialog;
     private UpdateAppDialogBinding activeBinding;
@@ -121,6 +132,7 @@ public final class AppUpdateChecker {
             });
         });
     }
+
     private static String friendlyError(Exception e) {
         String m = e.getMessage() == null ? "" : e.getMessage();
         if (m.startsWith("GitHub HTTP 403") || m.startsWith("GitHub HTTP 429"))
@@ -131,6 +143,7 @@ public final class AppUpdateChecker {
             return "The latest release tag is not a version number like v1.1.0.";
         return "Couldn't check for updates. Check your internet connection and try again.";
     }
+
     private Result fetchRelease(String repository, String installed, boolean manual) throws Exception {
         String path = repository.substring("https://github.com/".length());
         JSONObject release = getJson(
@@ -142,7 +155,6 @@ public final class AppUpdateChecker {
                     "No supported stable release was found.");
         }
 
-//        String latest = release.optString("tag_name", "").trim();
         String latest = release.optString("tag_name", "").trim();
         java.util.regex.Matcher tag = java.util.regex.Pattern
                 .compile("[0-9]+(?:\\.[0-9]+){0,3}").matcher(latest);
@@ -178,7 +190,6 @@ public final class AppUpdateChecker {
                             + "from the GitHub release.");
         }
 
-        // Only download APK assets hosted by the expected GitHub repository.
         Uri parsed = Uri.parse(apkUrl);
         String expectedPrefix = repository + "/releases/download/";
 
@@ -202,6 +213,21 @@ public final class AppUpdateChecker {
         }
 
         result.notes = release.optString("body", "").trim();
+
+        // Optional: Check if a custom update.json exists on the raw repository main branch
+        try {
+            JSONObject customJson = getJson("https://raw.githubusercontent.com/" + path + "/main/update.json");
+            if (customJson != null && customJson.has("notes")) {
+                Object notesObj = customJson.get("notes");
+                if (notesObj instanceof JSONArray) {
+                    result.notes = ((JSONArray) notesObj).toString();
+                } else if (notesObj instanceof String) {
+                    result.notes = (String) notesObj;
+                }
+            }
+        } catch (Exception ignored) {
+            // Fall back to release body if update.json is not present
+        }
 
         if (result.notes.isEmpty()) {
             result.notes = "No release notes were provided.";
@@ -295,45 +321,29 @@ public final class AppUpdateChecker {
         }
 
         pending = null;
+        currentResult = result;
 
         UpdateAppDialogBinding binding = UpdateAppDialogBinding.inflate(LayoutInflater.from(activity));
-
         activeBinding = binding;
 
         binding.updateCurrentVersion.setText(result.installed);
         binding.updateVersion.setText(result.latest);
         binding.updateReleaseName.setText(result.title);
-        binding.updateReleaseNotes.setText(result.notes);
+        binding.updateReleaseNotes.setText(formatReleaseNotes(result.notes));
 
-        if (binding.updateProgressContainer != null) {
-            binding.updateProgressContainer.setVisibility(View.GONE);
+        if (downloadedApk != null && downloadedApk.exists()) {
+            showCompleteState(binding);
+        } else if (downloading) {
+            showDownloadingState(binding, lastProgress);
+        } else if (isPaused) {
+            showPausedState(binding, lastProgress);
+        } else {
+            showIdleState(binding);
         }
-        binding.updateProgressBar.setProgress(0);
-        binding.updateProgressPercent.setText("0%");
-        binding.updateProgressStatus.setText("Preparing download...");
 
         AlertDialog created = new AlertDialog.Builder(activity)
                 .setView(binding.getRoot())
                 .create();
-
-        binding.updateRemind.setOnClickListener(v -> {
-            created.dismiss();
-        });
-
-        binding.updateNowBtn.setOnClickListener(v -> {
-            if (downloading) return;
-
-            downloading = true;
-            downloadingVersion = result.latest;
-
-            binding.updateRemind.setEnabled(false);
-            binding.updateNowBtn.setEnabled(false);
-            binding.updateNowBtn.setText("Downloading...");
-            binding.updateProgressContainer.setVisibility(View.VISIBLE);
-            binding.updateProgressStatus.setText("Connecting to GitHub...");
-
-            startDownload(result);
-        });
 
         created.setCanceledOnTouchOutside(false);
         created.setOnDismissListener(v -> {
@@ -350,7 +360,130 @@ public final class AppUpdateChecker {
         }
     }
 
+    private void showIdleState(UpdateAppDialogBinding binding) {
+        if (binding == null) return;
+        binding.updateProgressContainer.setVisibility(View.GONE);
+        binding.updateRemind.setText("Remind me Later");
+        binding.updateRemind.setEnabled(true);
+        binding.updateRemind.setOnClickListener(v -> {
+            if (dialog != null) dialog.dismiss();
+        });
+
+        binding.updateNowBtn.setText("Update Now");
+        binding.updateNowBtn.setEnabled(true);
+        binding.updateNowBtn.setOnClickListener(v -> {
+            if (downloading) return;
+            downloading = true;
+            isPaused = false;
+            downloadingVersion = currentResult != null ? currentResult.latest : "";
+            showDownloadingState(binding, lastProgress);
+            startDownload(currentResult);
+        });
+    }
+
+    private void showDownloadingState(UpdateAppDialogBinding binding, int progress) {
+        if (binding == null) return;
+        binding.updateProgressContainer.setVisibility(View.VISIBLE);
+        binding.updateProgressStatus.setText("Downloading update...");
+        updateProgressViews(binding, progress);
+
+        // Simple button = Cancel
+        binding.updateRemind.setText("Cancel");
+        binding.updateRemind.setEnabled(true);
+        binding.updateRemind.setOnClickListener(v -> {
+            cancelDownloadAndReset();
+        });
+
+        // Blue Primary button = Pause
+        binding.updateNowBtn.setText("Pause");
+        binding.updateNowBtn.setEnabled(true);
+        binding.updateNowBtn.setOnClickListener(v -> {
+            isPaused = true;
+            showPausedState(binding, lastProgress);
+            showDownloadNotification(lastProgress, true);
+        });
+    }
+
+    private void showPausedState(UpdateAppDialogBinding binding, int progress) {
+        if (binding == null) return;
+        binding.updateProgressContainer.setVisibility(View.VISIBLE);
+        binding.updateProgressStatus.setText("Download paused (" + Math.max(0, progress) + "%)");
+        updateProgressViews(binding, progress);
+
+        // Simple button = Cancel
+        binding.updateRemind.setText("Cancel");
+        binding.updateRemind.setEnabled(true);
+        binding.updateRemind.setOnClickListener(v -> {
+            cancelDownloadAndReset();
+        });
+
+        // Blue Primary button = Resume
+        binding.updateNowBtn.setText("Resume");
+        binding.updateNowBtn.setEnabled(true);
+        binding.updateNowBtn.setOnClickListener(v -> {
+            if (downloading) return;
+            downloading = true;
+            isPaused = false;
+            showDownloadingState(binding, lastProgress);
+            startDownload(currentResult);
+        });
+    }
+
+    private void showCompleteState(UpdateAppDialogBinding binding) {
+        if (binding == null) return;
+        binding.updateProgressContainer.setVisibility(View.VISIBLE);
+        binding.updateProgressStatus.setText("✓ Download complete. Ready to install!");
+        binding.updateProgressBar.setIndeterminate(false);
+        binding.updateProgressBar.setProgress(100);
+        binding.updateProgressPercent.setText("100%");
+
+        binding.updateRemind.setText("Later");
+        binding.updateRemind.setEnabled(true);
+        binding.updateRemind.setOnClickListener(v -> {
+            if (dialog != null) dialog.dismiss();
+        });
+
+        binding.updateNowBtn.setText("Install Now");
+        binding.updateNowBtn.setEnabled(true);
+        binding.updateNowBtn.setOnClickListener(v -> {
+            requestInstallation();
+        });
+    }
+
+    private void updateProgressViews(UpdateAppDialogBinding binding, int progress) {
+        if (binding == null) return;
+        if (progress >= 0) {
+            binding.updateProgressBar.setIndeterminate(false);
+            binding.updateProgressBar.setProgress(progress);
+            binding.updateProgressPercent.setText(progress + "%");
+        } else {
+            binding.updateProgressBar.setIndeterminate(true);
+            binding.updateProgressPercent.setText("Downloading...");
+        }
+    }
+
+    private void cancelDownloadAndReset() {
+        downloading = false;
+        isPaused = false;
+        lastProgress = 0;
+        cancelNotification();
+        try {
+            File directory = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (directory != null) {
+                File temporary = new File(directory, "slidepilot-update.apk.part");
+                if (temporary.exists()) temporary.delete();
+            }
+        } catch (Exception ignored) {}
+        if (activeBinding != null) {
+            showIdleState(activeBinding);
+        }
+    }
+
     private void startDownload(Result result) {
+        if (result == null) return;
+        createNotificationChannel();
+        showDownloadNotification(lastProgress, false);
+
         executor.execute(() -> {
             File temporary = null;
 
@@ -389,7 +522,6 @@ public final class AppUpdateChecker {
                     }
                 }
 
-
                 if (!isZipFile(destination)) {
                     destination.delete();
                     throw new IOException("Downloaded file is not a valid APK archive");
@@ -411,43 +543,58 @@ public final class AppUpdateChecker {
                     throw new IOException("APK version does not match the release");
                 }
 
-
                 main.post(() -> {
                     if (closed) return;
 
                     downloading = false;
+                    isPaused = false;
                     downloadedApk = destination;
 
+                    showCompleteNotification();
+
                     if (activeBinding != null) {
-                        activeBinding.updateProgressBar.setProgress(100);
-                        activeBinding.updateProgressPercent.setText("100%");
-                        activeBinding.updateProgressStatus.setText(
-                                "Download complete. Preparing installation...");
+                        showCompleteState(activeBinding);
+                    } else {
+                        showInstallPrompt();
                     }
-
-                    if (dialog != null) {
-                        dialog.dismiss();
-                    }
-
-                    showInstallPrompt();
                 });
 
+            } catch (DownloadPausedException e) {
+                main.post(() -> {
+                    if (closed) return;
+                    downloading = false;
+                    if (activeBinding != null) {
+                        showPausedState(activeBinding, lastProgress);
+                    }
+                    showDownloadNotification(lastProgress, true);
+                });
             } catch (Exception e) {
-                if (temporary != null) temporary.delete();
+                if (temporary != null && !isPaused) temporary.delete();
 
                 main.post(() -> {
                     if (closed) return;
 
                     downloading = false;
+                    isPaused = false;
 
                     if (activeBinding != null) {
                         activeBinding.updateProgressStatus.setText(
-                                "Download failed. Please try again.");
+                                "Download failed: " + e.getMessage());
                         activeBinding.updateNowBtn.setEnabled(true);
                         activeBinding.updateNowBtn.setText("Retry");
+                        activeBinding.updateNowBtn.setOnClickListener(v -> {
+                            downloading = true;
+                            showDownloadingState(activeBinding, lastProgress);
+                            startDownload(result);
+                        });
                         activeBinding.updateRemind.setEnabled(true);
+                        activeBinding.updateRemind.setText("Dismiss");
+                        activeBinding.updateRemind.setOnClickListener(v -> {
+                            if (dialog != null) dialog.dismiss();
+                        });
                     }
 
+                    cancelNotification();
                     toast("Update download failed: " + e.getMessage());
                 });
             }
@@ -460,44 +607,71 @@ public final class AppUpdateChecker {
         HttpURLConnection connection = null;
 
         try {
-            connection = (HttpURLConnection)
-                    new URL(result.apkUrl).openConnection();
+            long existingSize = destination.exists() ? destination.length() : 0;
+            String currentUrl = result.apkUrl;
+            int redirects = 0;
+            boolean append = false;
 
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(15000);
-            connection.setReadTimeout(20000);
-            connection.setInstanceFollowRedirects(true);
-            connection.setUseCaches(false);
-            connection.setRequestProperty(
-                    "User-Agent", "SlidePilot-Android");
+            while (redirects < 5) {
+                connection = (HttpURLConnection) new URL(currentUrl).openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(20000);
+                connection.setInstanceFollowRedirects(false);
+                connection.setUseCaches(false);
+                connection.setRequestProperty("User-Agent", "SlidePilot-Android");
 
-            int status = connection.getResponseCode();
+                if (existingSize > 0) {
+                    connection.setRequestProperty("Range", "bytes=" + existingSize + "-");
+                }
 
-            if (status != HttpURLConnection.HTTP_OK) {
-                throw new IOException("Download server HTTP " + status);
+                int status = connection.getResponseCode();
+                if (status == HttpURLConnection.HTTP_MOVED_TEMP || status == HttpURLConnection.HTTP_MOVED_PERM
+                        || status == 307 || status == 308) {
+                    String location = connection.getHeaderField("Location");
+                    if (location != null && !location.isEmpty()) {
+                        currentUrl = location;
+                        connection.disconnect();
+                        redirects++;
+                        continue;
+                    }
+                }
+
+                if (status == HttpURLConnection.HTTP_PARTIAL) {
+                    append = true;
+                } else if (status == HttpURLConnection.HTTP_OK) {
+                    existingSize = 0;
+                } else {
+                    throw new IOException("Download server HTTP " + status);
+                }
+                break;
             }
 
             long total = connection.getContentLengthLong();
+            if (append) {
+                total = existingSize + (total > 0 ? total : 0);
+            } else {
+                if (total <= 0) total = result.apkSize;
+            }
 
-            if (total > MAX_APK_BYTES
-                    || (result.apkSize > 0 && total > 0
-                    && total != result.apkSize)) {
+            if (total > MAX_APK_BYTES) {
                 throw new IOException("Unexpected APK size");
             }
 
-            if (total <= 0) total = result.apkSize;
-
             try (InputStream input = connection.getInputStream();
-                 FileOutputStream output = new FileOutputStream(destination)) {
+                 FileOutputStream output = new FileOutputStream(destination, append)) {
 
                 byte[] buffer = new byte[16384];
-                long downloaded = 0;
+                long downloaded = existingSize;
                 int count;
-                int lastProgress = -1;
 
                 while ((count = input.read(buffer)) != -1) {
                     if (closed || Thread.currentThread().isInterrupted()) {
                         throw new IOException("Download cancelled");
+                    }
+
+                    if (isPaused) {
+                        throw new DownloadPausedException();
                     }
 
                     downloaded += count;
@@ -515,10 +689,12 @@ public final class AppUpdateChecker {
 
                         if (progress != lastProgress) {
                             lastProgress = progress;
-                            final int value = progress;
+                            final int val = progress;
 
-                            main.post(() -> updateProgress(
-                                    value, "Downloading update..."));
+                            main.post(() -> {
+                                updateProgress(val, "Downloading update...");
+                                showDownloadNotification(val, false);
+                            });
                         }
                     } else {
                         main.post(() -> updateProgress(
@@ -540,16 +716,186 @@ public final class AppUpdateChecker {
 
     private void updateProgress(int progress, String status) {
         if (closed || activeBinding == null) return;
-
+        updateProgressViews(activeBinding, progress);
         activeBinding.updateProgressStatus.setText(status);
+    }
 
-        if (progress >= 0) {
-            activeBinding.updateProgressBar.setIndeterminate(false);
-            activeBinding.updateProgressBar.setProgress(progress);
-            activeBinding.updateProgressPercent.setText(progress + "%");
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "App Updates",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Notifications for SlidePilot app updates");
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void showDownloadNotification(int progress, boolean paused) {
+        try {
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+            }
+
+            Intent intent = new Intent(activity, HelpActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    activity, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
+            String title = paused ? "SlidePilot Download Paused" : "Downloading SlidePilot " + downloadingVersion;
+            String text = paused ? (progress >= 0 ? progress + "% • Tap to resume or open" : "Download paused")
+                    : (progress >= 0 ? progress + "% downloaded" : "Downloading...");
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle(title)
+                    .setContentText(text)
+                    .setOngoing(!paused)
+                    .setAutoCancel(paused)
+                    .setContentIntent(pendingIntent);
+
+            if (progress >= 0) {
+                builder.setProgress(100, progress, false);
+            } else {
+                builder.setProgress(0, 0, true);
+            }
+
+            nm.notify(NOTIFICATION_ID, builder.build());
+        } catch (Exception ignored) {}
+    }
+
+    private void showCompleteNotification() {
+        try {
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                        != PackageManager.PERMISSION_GRANTED) {
+                    return;
+                }
+            }
+
+            // Cancel any progress notification so OS rebuilds a clean, swipable complete notification
+            nm.cancel(NOTIFICATION_ID);
+
+            Intent installIntent = getInstallIntent();
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    activity, 0, installIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(activity, CHANNEL_ID)
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle("SlidePilot " + downloadingVersion + " Downloaded")
+                    .setContentText("Tap to install update now")
+                    .setProgress(0, 0, false)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setOngoing(false)
+                    .setContentIntent(pendingIntent);
+
+            nm.notify(NOTIFICATION_ID, builder.build());
+        } catch (Exception ignored) {}
+    }
+
+    private void cancelNotification() {
+        try {
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(NOTIFICATION_ID);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private Intent getInstallIntent() {
+        if (downloadedApk == null || !downloadedApk.exists()) {
+            return new Intent(activity, HelpActivity.class);
+        }
+        Uri apkUri = FileProvider.getUriForFile(
+                activity,
+                activity.getPackageName() + ".fileprovider",
+                downloadedApk);
+
+        Intent install = new Intent(Intent.ACTION_VIEW);
+        install.setDataAndType(apkUri, "application/vnd.android.package-archive");
+        install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        return install;
+    }
+
+    private CharSequence formatReleaseNotes(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return "• General performance improvements and bug fixes.";
+        }
+
+        String text = raw.trim();
+
+        if (text.startsWith("[") && text.endsWith("]")) {
+            try {
+                JSONArray array = new JSONArray(text);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < array.length(); i++) {
+                    if (i > 0) sb.append("<br/><br/>");
+                    sb.append("• ").append(array.getString(i));
+                }
+                String html = sb.toString();
+                return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
+                        ? Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY)
+                        : Html.fromHtml(html);
+            } catch (Exception ignored) {}
+        }
+
+        text = text.replaceAll("(?i)###?\\s*Installation[\\s\\S]*?(?=###?|\\z)", "");
+        text = text.replaceAll("(?i)###?\\s*Version[\\s\\S]*?(?=###?|\\z)", "");
+
+        String[] lines = text.split("\n");
+        StringBuilder cleanNotes = new StringBuilder();
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#") || trimmed.startsWith("---") || trimmed.startsWith("===")) {
+                continue;
+            }
+
+            trimmed = trimmed.replaceAll("\\*\\*(.*?)\\*\\*", "<b>$1</b>");
+            trimmed = trimmed.replaceAll("`([^`]+)`", "$1");
+
+            if (trimmed.matches("^[\\*\\-\\•]\\s+.*")) {
+                trimmed = "• " + trimmed.replaceFirst("^[\\*\\-\\•]\\s+", "");
+            } else if (trimmed.matches("^[0-9]+\\.\\s+.*")) {
+                trimmed = "• " + trimmed.replaceFirst("^[0-9]+\\.\\s+", "");
+            } else {
+                trimmed = "• " + trimmed;
+            }
+
+            if (cleanNotes.length() > 0) {
+                cleanNotes.append("<br/><br/>");
+            }
+            cleanNotes.append(trimmed);
+        }
+
+        if (cleanNotes.length() == 0) {
+            return "• General performance improvements and bug fixes.";
+        }
+
+        String html = cleanNotes.toString();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(html, Html.FROM_HTML_MODE_LEGACY);
         } else {
-            activeBinding.updateProgressBar.setIndeterminate(true);
-            activeBinding.updateProgressPercent.setText("Downloading...");
+            return Html.fromHtml(html);
         }
     }
 
@@ -642,11 +988,8 @@ public final class AppUpdateChecker {
         result.installed = "1.0.0";
         result.latest = "1.1.0";
         result.title = "SlidePilot v1.1.0";
-        result.notes = "• Improved Bluetooth connection\n"
-                + "• Faster slide controls\n"
-                + "• Fixed minor issues";
+        result.notes = "[\"Improved Bluetooth connection stability\", \"Faster slide controls & responsiveness\", \"Fixed minor UI issues\"]";
 
-        // Preview mode does not download anything.
         result.apkUrl = "";
         pending = result;
         presentPending();
@@ -657,7 +1000,11 @@ public final class AppUpdateChecker {
         resumed = true;
 
         if (downloadedApk != null && downloadedApk.exists()) {
-            showInstallPrompt();
+            if (dialog == null) {
+                presentPending();
+            } else {
+                showInstallPrompt();
+            }
         } else {
             presentPending();
         }
@@ -676,6 +1023,7 @@ public final class AppUpdateChecker {
         closed = true;
         resumed = false;
         pending = null;
+        cancelNotification();
         main.removeCallbacksAndMessages(null);
         executor.shutdownNow();
 
@@ -732,6 +1080,12 @@ public final class AppUpdateChecker {
         }
 
         return 0;
+    }
+
+    private static final class DownloadPausedException extends IOException {
+        DownloadPausedException() {
+            super("Download paused by user");
+        }
     }
 
     private static final class Result {

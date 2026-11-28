@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;

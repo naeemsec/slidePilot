@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.os.Build;
 import android.os.SystemClock;

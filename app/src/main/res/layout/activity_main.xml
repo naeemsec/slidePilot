@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/root"
     android:layout_width="match_parent"
@@ -346,7 +347,7 @@
                         android:layout_gravity="center_horizontal"
                         android:contentDescription="@string/go_slide_desc"
                         android:padding="15dp"
-                        android:tint="@color/white"
+                        app:tint="@color/white"
                         android:src="@drawable/ic_send" />
                 </LinearLayout>
 
@@ -367,6 +368,186 @@
                     style="@style/Body"
                     android:layout_marginTop="12dp"
                     android:text="@string/focus_note" />
+
+                <!-- TOUCHPAD & LASER POINTER TOGGLE + LOCK SCREEN BUTTON ROW -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/toggleTouchpad"
+                        style="@style/Action"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
+                        android:text="Touchpad &amp; Laser" />
+
+                    <Button
+                        android:id="@+id/lockScreenBtn"
+                        style="@style/Action"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="0dp"
+                        android:text="🔓 Lock Screen" />
+                </LinearLayout>
+
+                <!-- GLOWING TOUCHPAD CARD (Hidden initially) -->
+                <LinearLayout
+                    android:id="@+id/touchpadCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_touchpad_glowing"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/Eyebrow"
+                        android:text="04 / TOUCHPAD &amp; LASER POINTER"
+                        android:textColor="#3B82F6" />
+
+                    <!-- MODE SELECTION: Mouse Cursor vs Laser Pointer -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/modeCursorBtn"
+                            style="@style/Primary"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="0dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="🖱️ Cursor" />
+
+                        <Button
+                            android:id="@+id/modeLaserBtn"
+                            style="@style/Action"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="0dp"
+                            android:layout_weight="1"
+                            android:text="🔴 Laser Pointer" />
+                    </LinearLayout>
+
+                    <!-- COLOR SELECTION BAR -->
+                    <LinearLayout
+                        android:id="@+id/colorPickerRow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Pointer Color: "
+                            android:textColor="@color/text"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <View
+                            android:id="@+id/colorRed"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="8dp"
+                            android:background="@drawable/dot_red"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <View
+                            android:id="@+id/colorGreen"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/dot_green"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <View
+                            android:id="@+id/colorBlue"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/dot_blue"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <View
+                            android:id="@+id/colorYellow"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/dot_yellow"
+                            android:clickable="true"
+                            android:focusable="true" />
+                    </LinearLayout>
+
+                    <!-- TOUCHPAD SURFACE AREA -->
+                    <FrameLayout
+                        android:id="@+id/touchpadSurface"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_touch_surface">
+
+                        <TextView
+                            android:id="@+id/touchpadHint"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:lineSpacingExtra="4dp"
+                            android:text="Slide finger to move mouse pointer\nTap for Left Click"
+                            android:textColor="#94A3B8"
+                            android:textSize="13sp" />
+
+                        <ImageView
+                            android:id="@+id/touchDot"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:contentDescription="Pointer Dot"
+                            android:src="@drawable/dot_red"
+                            android:visibility="gone" />
+                    </FrameLayout>
+
+                    <!-- LEFT & RIGHT CLICK BUTTONS -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/leftClickBtn"
+                            style="@style/Action"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="0dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:text="Left Click" />
+
+                        <Button
+                            android:id="@+id/rightClickBtn"
+                            style="@style/Action"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="0dp"
+                            android:layout_weight="1"
+                            android:text="Right Click" />
+                    </LinearLayout>
+
+                </LinearLayout>
             </LinearLayout>
 
             <Button

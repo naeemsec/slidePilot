@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -219,8 +219,8 @@ public final class HidController {
                 try {
                     registering = true;
                     BluetoothHidDeviceAppSdpSettings sdp = new BluetoothHidDeviceAppSdpSettings(
-                            "SlidePilot", "Offline presentation keyboard", "SlidePilot",
-                            BluetoothHidDevice.SUBCLASS1_KEYBOARD, KeyboardReport.descriptor());
+                            "SlidePilot", "Offline presentation keyboard & touchpad", "SlidePilot",
+                            BluetoothHidDevice.SUBCLASS1_COMBO, KeyboardReport.descriptor());
                     // The return value is not registration state. Some firmware returns false
                     // while a native registration and its callback are still pending.
                     // Do not unregister or close the proxy before that callback arrives.
@@ -392,7 +392,8 @@ public final class HidController {
             handler.removeCallbacks(connectionTimeout);
             // Clear any host-side modifier/key state before allowing a first command.
             input = KeyboardReport.release();
-            if (!hid.sendReport(host, 0, input)) { fail(State.CONNECTION_FAILED, R.string.report_failed); return; }
+            if (!hid.sendReport(host, 1, input)) { fail(State.CONNECTION_FAILED, R.string.report_failed); return; }
+            try { hid.sendReport(host, 2, new byte[] { 0, 0, 0, 0 }); } catch (RuntimeException ignored) {}
             busy = false;
             leds = 0;
             emit(State.CONNECTED, R.string.connected_detail);
@@ -523,7 +524,7 @@ public final class HidController {
 
         try {
             if (hid != null && registered && target != null) {
-                if (host != null) hid.sendReport(target, 0, input);
+                if (host != null) hid.sendReport(target, 1, input);
                 hid.disconnect(target);
             }
         } catch (RuntimeException error) {
@@ -540,22 +541,37 @@ public final class HidController {
         emit(State.DISCONNECTED, R.string.disconnected_detail);
     }
     public boolean send(KeyboardReport.Command command) {
-        if (!connected() || !hasPermission() || busy || sequenceRunning || SystemClock.uptimeMillis() - lastPress < 220) return false;
+        if (!connected() || !hasPermission() || sequenceRunning) return false;
         try {
             if (host.getBondState() != BluetoothDevice.BOND_BONDED
                     || hid.getConnectionState(host) != BluetoothProfile.STATE_CONNECTED) {
                 fail(State.DISCONNECTED, R.string.disconnected_detail); return false;
             }
+            if (busy) {
+                releaseKeys();
+            }
             lastPress = SystemClock.uptimeMillis();
             busy = true;
             input = KeyboardReport.press(command);
-            if (!hid.sendReport(host, 0, input)) {
+            if (!hid.sendReport(host, 1, input)) {
                 fail(State.CONNECTION_FAILED, R.string.report_failed); return false;
             }
             releaseRetries = 0;
+            handler.removeCallbacks(releaseTask);
             handler.postDelayed(releaseTask, 45);
             return true;
         } catch (RuntimeException error) { apiFailure(error); return false; }
+    }
+
+    public boolean sendMouseReport(byte buttons, byte dx, byte dy) {
+        if (!connected() || !hasPermission() || hid == null || host == null) return false;
+        try {
+            byte[] report = new byte[] { buttons, dx, dy, 0 };
+            return hid.sendReport(host, 2, report);
+        } catch (RuntimeException error) {
+            logError(error);
+            return false;
+        }
     }
     /** Sends several keys one after another (digits then Enter). Returns false if it could not start. */
     public boolean sendSequence(List<KeyboardReport.Command> commands) {
@@ -579,7 +595,7 @@ public final class HidController {
             lastPress = SystemClock.uptimeMillis();
             busy = true;
             input = KeyboardReport.press(queue.poll());
-            if (!hid.sendReport(host, 0, input)) {
+            if (!hid.sendReport(host, 1, input)) {
                 queue.clear(); sequenceRunning = false;
                 fail(State.CONNECTION_FAILED, R.string.report_failed);
                 return;
@@ -601,7 +617,9 @@ public final class HidController {
         input = KeyboardReport.release();
         if (!active || host == null || hid == null || !registered) { busy = false; return; }
         try {
-            if (hid.sendReport(host, 0, input)) { busy = false; return; }
+            boolean r1 = hid.sendReport(host, 1, input);
+            try { hid.sendReport(host, 2, new byte[] { 0, 0, 0, 0 }); } catch (RuntimeException ignored) {}
+            if (r1) { busy = false; return; }
             if (attempt < 2) {
                 releaseRetries = attempt + 1;
                 handler.postDelayed(releaseTask, 35);
@@ -642,8 +660,10 @@ public final class HidController {
         cleanupGeneration = radioGeneration;
         cleanupsInFlight++;
         if (host != null) {
-            try { hid.sendReport(host, 0, input); }
-            catch (RuntimeException error) { logError(error); }
+            try {
+                hid.sendReport(host, 1, KeyboardReport.release());
+                try { hid.sendReport(host, 2, new byte[] { 0, 0, 0, 0 }); } catch (RuntimeException ignored) {}
+            } catch (RuntimeException error) { logError(error); }
             // Never disconnect a merely selected device with no established HID session.
             try { hid.disconnect(host); }
             catch (RuntimeException error) { logError(error); }

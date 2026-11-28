@@ -34,7 +34,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SlidePilot"
+                android:text="@string/app_name"
                 android:textColor="@color/muted"
                 android:textSize="12sp" />
 

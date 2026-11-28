@@ -1,4 +1,4 @@
-package com.slidepilot.app;
+package com.presakey.app;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -16,7 +16,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Insets;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,10 +23,10 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.transition.AutoTransition;
-import android.transition.Slide;
 import android.transition.TransitionManager;
 import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -36,26 +35,17 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONObject;
-
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
     private static final int CONNECT_PERMISSION = 10, ADVERTISE_PERMISSION = 11, DISCOVERABLE = 12, NOTIFICATION_PERMISSION = 13;;
@@ -75,7 +65,8 @@ public final class MainActivity extends Activity {
     private boolean compactShown;
     private int lastWait;
     private boolean keepConnectionOnStop;
-    private final int[] remoteIds = {R.id.next, R.id.previous, R.id.start, R.id.current, R.id.black, R.id.end, R.id.slideNumber, R.id.goSlide};
+    private boolean isScreenLocked, isLaserMode;
+    private final int[] remoteIds = {R.id.next, R.id.previous, R.id.start, R.id.current, R.id.black, R.id.end, R.id.slideNumber, R.id.goSlide, R.id.toggleTouchpad, R.id.lockScreenBtn, R.id.modeCursorBtn, R.id.modeLaserBtn, R.id.leftClickBtn, R.id.rightClickBtn};
     private final Runnable ticker = new Runnable() {
         @Override public void run() { renderTimer(); renderCooldown(); if (started) ui.postDelayed(this, 250); }
     };
@@ -177,6 +168,7 @@ public final class MainActivity extends Activity {
             else open.run();
         });
         showOnboarding(!prefs.getBoolean("onboarded", false));
+        setupTouchpad();
         updateChecker = new AppUpdateChecker(this);
         updateChecker.check(false);
     }
@@ -513,4 +505,186 @@ public final class MainActivity extends Activity {
         try { startActivity(intent); } catch (RuntimeException error) { toast(R.string.intent_failed); }
     }
     private void toast(int message) { Toast.makeText(this, message, Toast.LENGTH_LONG).show(); }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupTouchpad() {
+        View touchpadCard = findViewById(R.id.touchpadCard);
+        Button toggleTouchpad = findViewById(R.id.toggleTouchpad);
+        Button lockScreenBtn = findViewById(R.id.lockScreenBtn);
+        Button modeCursorBtn = findViewById(R.id.modeCursorBtn);
+        Button modeLaserBtn = findViewById(R.id.modeLaserBtn);
+        View colorRed = findViewById(R.id.colorRed);
+        View colorGreen = findViewById(R.id.colorGreen);
+        View colorBlue = findViewById(R.id.colorBlue);
+        View colorYellow = findViewById(R.id.colorYellow);
+        View touchpadSurface = findViewById(R.id.touchpadSurface);
+        ImageView touchDot = findViewById(R.id.touchDot);
+        TextView touchpadHint = findViewById(R.id.touchpadHint);
+        Button leftClickBtn = findViewById(R.id.leftClickBtn);
+        Button rightClickBtn = findViewById(R.id.rightClickBtn);
+        View rootScrollView = findViewById(R.id.root);
+
+        if (toggleTouchpad == null || touchpadCard == null) return;
+
+        // Screen Lock/Unlock Toggle
+        if (lockScreenBtn != null) {
+            lockScreenBtn.setOnClickListener(v -> {
+                isScreenLocked = !isScreenLocked;
+                if (isScreenLocked) {
+                    if (rootScrollView != null) {
+                        rootScrollView.setOnTouchListener((view, event) -> true);
+                    }
+                    lockScreenBtn.setText("🔒 Locked");
+                    Toast.makeText(this, "Screen layout locked 🔒", Toast.LENGTH_SHORT).show();
+                } else {
+                    if (rootScrollView != null) {
+                        rootScrollView.setOnTouchListener(null);
+                    }
+                    lockScreenBtn.setText("🔓 Lock Screen");
+                    Toast.makeText(this, "Screen layout unlocked 🔓", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        toggleTouchpad.setOnClickListener(v -> {
+            if (touchpadCard.getVisibility() == View.VISIBLE) {
+                touchpadCard.setVisibility(View.GONE);
+                toggleTouchpad.setText("Touchpad & Laser  🎯");
+            } else {
+                touchpadCard.setVisibility(View.VISIBLE);
+                toggleTouchpad.setText("Hide Touchpad & Laser  ▲");
+            }
+        });
+
+        // Mode Switching (Cursor vs Laser Pointer)
+        if (modeCursorBtn != null && modeLaserBtn != null) {
+            modeCursorBtn.setOnClickListener(v -> {
+                isLaserMode = false;
+                modeCursorBtn.setBackgroundResource(R.drawable.button_primary);
+                modeLaserBtn.setBackgroundResource(R.drawable.button_soft);
+                if (touchpadHint != null) {
+                    touchpadHint.setText("Slide finger to move mouse pointer\nTap for Left Click");
+                }
+            });
+
+            modeLaserBtn.setOnClickListener(v -> {
+                isLaserMode = true;
+                modeLaserBtn.setBackgroundResource(R.drawable.button_primary);
+                modeCursorBtn.setBackgroundResource(R.drawable.button_soft);
+                if (touchpadHint != null) {
+                    touchpadHint.setText("Slide finger to project Laser Pointer (Ctrl+Click)\nTap for Left Click");
+                }
+            });
+        }
+
+        // Color Selection for Touch Dot
+        if (touchDot != null) {
+            if (colorRed != null) colorRed.setOnClickListener(v -> touchDot.setImageResource(R.drawable.dot_red));
+            if (colorGreen != null) colorGreen.setOnClickListener(v -> touchDot.setImageResource(R.drawable.dot_green));
+            if (colorBlue != null) colorBlue.setOnClickListener(v -> touchDot.setImageResource(R.drawable.dot_blue));
+            if (colorYellow != null) colorYellow.setOnClickListener(v -> touchDot.setImageResource(R.drawable.dot_yellow));
+        }
+
+        if (touchpadSurface != null) {
+            touchpadSurface.setOnTouchListener(new View.OnTouchListener() {
+                private float lastX, lastY;
+                private long touchStartTime;
+                private boolean isMoving;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    // Prevent parent ScrollView from scrolling while dragging on Touchpad!
+                    v.getParent().requestDisallowInterceptTouchEvent(true);
+
+                    if (controller == null || !controller.connected()) {
+                        return false;
+                    }
+
+                    float x = event.getX();
+                    float y = event.getY();
+
+                    switch (event.getActionMasked()) {
+                        case MotionEvent.ACTION_DOWN:
+                            lastX = x;
+                            lastY = y;
+                            touchStartTime = SystemClock.uptimeMillis();
+                            isMoving = false;
+                            if (touchDot != null) {
+                                touchDot.setVisibility(View.VISIBLE);
+                                touchDot.setX(x - touchDot.getWidth() / 2f);
+                                touchDot.setY(y - touchDot.getHeight() / 2f);
+                            }
+                            if (isLaserMode) {
+                                controller.sendMouseReport((byte) 0x01, (byte) 0, (byte) 0);
+                            }
+                            return true;
+
+                        case MotionEvent.ACTION_MOVE:
+                            float dxFloat = (x - lastX) * 1.8f;
+                            float dyFloat = (y - lastY) * 1.8f;
+
+                            if (Math.abs(dxFloat) > 1 || Math.abs(dyFloat) > 1) {
+                                isMoving = true;
+                            }
+
+                            lastX = x;
+                            lastY = y;
+
+                            if (touchDot != null) {
+                                touchDot.setX(x - touchDot.getWidth() / 2f);
+                                touchDot.setY(y - touchDot.getHeight() / 2f);
+                            }
+
+                            byte dx = (byte) Math.max(-127, Math.min(127, (int) dxFloat));
+                            byte dy = (byte) Math.max(-127, Math.min(127, (int) dyFloat));
+
+                            byte buttons = isLaserMode ? (byte) 0x01 : (byte) 0x00;
+                            controller.sendMouseReport(buttons, dx, dy);
+                            return true;
+
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            if (touchDot != null) {
+                                touchDot.setVisibility(View.GONE);
+                            }
+                            if (isLaserMode) {
+                                controller.sendMouseReport((byte) 0x00, (byte) 0, (byte) 0);
+                            } else {
+                                long duration = SystemClock.uptimeMillis() - touchStartTime;
+                                if (!isMoving && duration < 250) {
+                                    controller.sendMouseReport((byte) 0x01, (byte) 0, (byte) 0);
+                                    ui.postDelayed(() -> {
+                                        controller.sendMouseReport((byte) 0x00, (byte) 0, (byte) 0);
+                                    }, 50);
+                                }
+                            }
+                            return true;
+                    }
+                    return false;
+                }
+            });
+        }
+
+        if (leftClickBtn != null) {
+            leftClickBtn.setOnClickListener(v -> {
+                if (controller != null && controller.connected()) {
+                    controller.sendMouseReport((byte) 0x01, (byte) 0, (byte) 0);
+                    ui.postDelayed(() -> {
+                        controller.sendMouseReport((byte) 0x00, (byte) 0, (byte) 0);
+                    }, 50);
+                }
+            });
+        }
+
+        if (rightClickBtn != null) {
+            rightClickBtn.setOnClickListener(v -> {
+                if (controller != null && controller.connected()) {
+                    controller.sendMouseReport((byte) 0x02, (byte) 0, (byte) 0);
+                    ui.postDelayed(() -> {
+                        controller.sendMouseReport((byte) 0x00, (byte) 0, (byte) 0);
+                    }, 50);
+                }
+            });
+        }
+    }
 }
